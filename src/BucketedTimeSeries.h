@@ -10,9 +10,9 @@
 #ifndef PERFORMANCE_BUCKETEDTIMESERIES_H
 #define PERFORMANCE_BUCKETEDTIMESERIES_H
 
+#include "Bucket.h"
 #include <chrono>
 #include <vector>
-#include "Bucket.h"
 
 template <typename VT, typename CT = std::chrono::steady_clock>
 class BucketedTimeSeries {
@@ -25,7 +25,17 @@ public:
 
     BucketedTimeSeries(size_t numBuckets, Duration duration);
 
-    bool addValue(const ValueType& value, TimePoint now);
+    size_t update(TimePoint now);
+
+    /* 将timeseries重置为空，就像没有添加过数据一样 */
+    void clear();
+
+    bool addValue(TimePoint now, const ValueType& value) { addValue(now, value, 1); }
+
+    bool addValue(TimePoint now, const ValueType& value, uint64_t count);
+
+    bool addValueAggregated(
+        TimePoint now, const ValueType& total, uint64_t nsamples);
 
     uint64_t count() { return mTotal.mCount; }
 
@@ -57,25 +67,24 @@ public:
     }
 
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
-    ReturnType valueRate()
+    ReturnType rate()
     {
         return ReturnType(mTotal.mSum / elapsed<Interval>().count());
     }
 
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
-    ReturnType valueRate(TimePoint start, TimePoint end)
+    ReturnType rate(TimePoint start, TimePoint end)
     {
         uint64_t intervalSum = sum(start, end);
         Interval interval = elapsed<Interval>(start, end);
         return ReturnType(intervalSum / interval.count());
     }
 
-
     /* 获取指定时间落入的 bucket 下标 */
     size_t getBucketIndex(TimePoint now);
 
     /* 获取时间戳now 所对应的bucket的时间范围 */
-    void getBucketInfo(TimePoint timePoint,size_t* bucketIdx,TimePoint* bucketStart,
+    void getBucketInfo(TimePoint timePoint, size_t* bucketIdx, TimePoint* bucketStart,
         TimePoint* nextBucketStart);
 
     TimePoint getEarliestTime();
@@ -91,7 +100,7 @@ public:
 
     /* 注意：[start,end)是前闭后开的区间 */
     template <typename Interval = std::chrono::seconds>
-    Interval elapsed(TimePoint start,TimePoint end);
+    Interval elapsed(TimePoint start, TimePoint end);
 
     template <typename Function>
     void forEachBucket(Function function) const;
@@ -109,9 +118,9 @@ public:
 
     bool isEmpty();
 
-    TimePoint getFirstTime() const { return mFirstTime;}
-    TimePoint getLatestTime() const { return mLatestTime;}
-    Duration getDuration() const { return mDuration;}
+    TimePoint getFirstTime() const { return mFirstTime; }
+    TimePoint getLatestTime() const { return mLatestTime; }
+    Duration getDuration() const { return mDuration; }
     const Bucket& getBucketByIdx(size_t index) const { return mBuckets[index]; }
 
 private:
