@@ -18,7 +18,7 @@ BucketedTimeSeries<VT, CT>::BucketedTimeSeries(
 }
 
 template <typename VT, typename CT>
-bool BucketedTimeSeries<VT, CT>::addValue(const ValueType& value, TimePoint now)
+bool BucketedTimeSeries<VT, CT>::addValue(TimePoint now, const ValueType& value, uint64_t count)
 {
     int bucketIndex;
     if (isEmpty()) {
@@ -39,8 +39,35 @@ bool BucketedTimeSeries<VT, CT>::addValue(const ValueType& value, TimePoint now)
             return false;
         bucketIndex = getBucketIndex(now);
     }
-    mTotal.addValue(value, 1);
-    mBuckets[bucketIndex].addValue(value, 1);
+    mTotal.addValue(value, count);
+    mBuckets[bucketIndex].addValue(value, count);
+    return true;
+}
+
+template <typename VT, typename CT>
+bool BucketedTimeSeries<VT, CT>::addValueAggregated(TimePoint now, const ValueType& total, uint64_t nsamples)
+{
+    int bucketIndex;
+    if (isEmpty()) {
+        // 记录到的第一个数据
+        mFirstTime = now;
+        mLatestTime = now;
+        bucketIndex = getBucketIndex(now);
+    } else if (now == mLatestTime) {
+        // now还在当前时间内，无需额外操作
+        bucketIndex = getBucketIndex(now);
+    } else if (now > mLatestTime) {
+        // now是一个稍新的时间
+        bucketIndex = updateBuckets(now);
+    } else {
+        // now是一个稍早一些的过去的时间, 需要check 这个时间是否还在
+        // 我们的跟踪的时间范围内
+        if (now < getEarliestTime())
+            return false;
+        bucketIndex = getBucketIndex(now);
+    }
+    mTotal.addValueAggregated(total, nsamples);
+    mBuckets[bucketIndex].addValueAggreted(total, nsamples);
     return true;
 }
 
@@ -50,6 +77,30 @@ bool BucketedTimeSeries<VT, CT>::isEmpty()
     // 在构造函数中已经把mFirstTime设置为较大值，如果有数据
     // 插入，那么mFirstTime不会是较大值
     return mFirstTime > mLatestTime;
+}
+
+template <typename VT, typename CT>
+size_t BucketedTimeSeries<VT, CT>::update(TimePoint now)
+{
+    if (isEmpty()) {
+        mFirstTime = now;
+    }
+    // 如果传入的时间没有当前有记录的时间新，那么不用管它
+    if (now <= mLatestTime) {
+        return getBucketIdx(mLatestTime);
+    }
+    return updateBuckets(now);
+}
+
+template <typename VT, typename CT>
+void BucketedTimeSeries<VT, CT>::clear()
+{
+    for (Bucket& bucket : mBuckets) {
+        bucket.clear();
+    }
+    mTotal.clear();
+    mFirstTime = TimePoint(Duration(1));
+    mLatestTime = TimePoint();
 }
 
 template <typename VT, typename CT>
@@ -138,7 +189,8 @@ typename CT::time_point BucketedTimeSeries<VT, CT>::getEarliestTime()
 
 template <typename VT, typename CT>
 uint64_t BucketedTimeSeries<VT, CT>::count(
-    TimePoint start, TimePoint end) const {
+    TimePoint start, TimePoint end) const
+{
     uint64_t sample_count = 0;
     forEachBucket(
         start,
@@ -155,7 +207,8 @@ uint64_t BucketedTimeSeries<VT, CT>::count(
 }
 
 template <typename VT, typename CT>
-VT BucketedTimeSeries<VT, CT>::sum(TimePoint start, TimePoint end) const {
+VT BucketedTimeSeries<VT, CT>::sum(TimePoint start, TimePoint end) const
+{
     ValueType total = ValueType();
     forEachBucket(
         start,
@@ -172,7 +225,7 @@ VT BucketedTimeSeries<VT, CT>::sum(TimePoint start, TimePoint end) const {
 }
 
 template <typename VT, typename CT>
-double BucketedTimeSeries<VT,CT>::avg(TimePoint start, TimePoint end) const
+double BucketedTimeSeries<VT, CT>::avg(TimePoint start, TimePoint end) const
 {
     uint64_t sample_count = 0;
     ValueType total = ValueType();
@@ -188,15 +241,9 @@ double BucketedTimeSeries<VT,CT>::avg(TimePoint start, TimePoint end) const
                 bucketStart, nextBucketStart, start, end, bucket.mSum);
             return true;
         });
-    if(sample_count == 0)
+    if (sample_count == 0)
         return 0.0;
     return double(total / sample_count);
-}
-
-template <typename VT, typename CT>
-ReturnType BucketedTimeSeries<VT,CT>::countRate()
-{
-
 }
 
 template <typename VT, typename CT>
