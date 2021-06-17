@@ -43,13 +43,13 @@ public:
         mCount -= bucket.mCount;
     }
 
-    ValueType avg() const
+    double avg() const
     {
         if(mCount == 0)
             return ValueType();
         auto sumf = double(mSum);
         auto countf = double(mCount);
-        return static_cast<ValueType>(sumf / countf);
+        return sumf / countf;
     }
 
     uint64_t mCount;
