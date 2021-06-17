@@ -25,6 +25,12 @@ public:
         mCount+=count;
     }
 
+    void addValueAggregated(const ValueType &total,const uint64_t& count)
+    {
+        mSum+=total;
+        mCount+=count;
+    }
+
     void clearBucket()
     {
         mCount = 0;
