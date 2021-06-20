@@ -4,8 +4,9 @@ project(performance)
 set(CMAKE_CXX_STANDARD 14)
 
 set(SOURCES
-        src/BucketedTimeSeries.cpp
-        src/MultiLevelTimeSeries.cpp
-        src/Histogram.cpp)
+        src/Bucket.h
+        src/BucketedTimeSeries.h
+        src/MultiLevelTimeSeries.h
+    )
 
 add_executable(performance main.cpp ${SOURCES})
