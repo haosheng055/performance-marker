@@ -15,24 +15,24 @@
 
 #include "BucketedTimeSeries.h"
 
-template <typename VT, typename CT = std::chrono::steady_clock >
+template <typename VT>
 class MultiLevelTimeSeries {
 public:
     using ValueType = VT;
-    using Clock = CT;
-    using Duration = typename Clock::duration;
-    using TimePoint = typename Clock::time_point;
-    using Level = BucketedTimeSeries<ValueType, Clock>;
+    using Clock = std::chrono::steady_clock;
+    using Duration = Clock::duration;
+    using TimePoint = Clock::time_point;
+    using Level = BucketedTimeSeries<ValueType>;
 
     /*
      * 这将创建一个新的MultiLevelTimeSeries，用于跟踪数个不同duration（level）的BucketTimeSeries
      * 的时间序列数据。为了提高存储效率，在每个级别跟踪的时间序列数据进一步除以numBuckets。
      */
     MultiLevelTimeSeries(
-        size_t numBuckets, size_t numLevels, const Duration levelDurations[]);
+        size_t nBuckets, size_t nLevels, const Duration levelDurations[]);
 
     MultiLevelTimeSeries(
-        size_t numBuckets, std::initializer_list<Duration> durations);
+        size_t nBuckets, std::initializer_list<Duration> durations);
 
     size_t numBuckets() const {
         // The constructor ensures that levels_ has at least one item
@@ -158,6 +158,6 @@ private:
     uint64_t cachedCount_;
 };
 
-
+#include "MultiLevelTimeSeries-inl.h"
 
 #endif//PERFORMANCE_MULTILEVELTIMESERIES_H

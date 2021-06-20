@@ -10,17 +10,18 @@
 #ifndef PERFORMANCE_BUCKETEDTIMESERIES_H
 #define PERFORMANCE_BUCKETEDTIMESERIES_H
 
-#include "Bucket.h"
 #include <chrono>
 #include <vector>
 
-template <typename VT, typename CT = std::chrono::steady_clock>
+#include "Bucket.h"
+
+template <typename VT>
 class BucketedTimeSeries {
 public:
     using ValueType = VT;
-    using Clock = CT;
-    using Duration = typename Clock::duration;
-    using TimePoint = typename Clock::time_point;
+    using Clock = std::chrono::steady_clock;
+    using Duration = Clock::duration;
+    using TimePoint = Clock::time_point;
     using Bucket = Bucket<ValueType>;
 
     BucketedTimeSeries(size_t numBuckets, Duration duration);
@@ -30,12 +31,9 @@ public:
     /* 将timeseries重置为空，就像没有添加过数据一样 */
     void clear();
 
-    bool addValue(TimePoint now, const ValueType& value) { addValue(now, value, 1); }
+    bool addValue(TimePoint now, const ValueType& value) { return addValue(now, value, 1); }
 
     bool addValue(TimePoint now, const ValueType& value, uint64_t count);
-
-    bool addValueAggregated(
-        TimePoint now, const ValueType& total, uint64_t nsamples);
 
     uint64_t count() { return mTotal.mCount; }
 
@@ -69,7 +67,7 @@ public:
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
     ReturnType rate()
     {
-        return ReturnType(mTotal.mSum / elapsed<Interval>().count());
+        return ReturnType(mTotal.mSum * 1.0 / elapsed<Interval>().count());
     }
 
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
@@ -80,10 +78,13 @@ public:
         return ReturnType(intervalSum / interval.count());
     }
 
-    /* 获取指定时间落入的 bucket 下标 */
+    /* 获取指定时间落入的 bucket 下标*/
     size_t getBucketIndex(TimePoint now);
 
-    /* 获取时间戳now 所对应的bucket的时间范围 */
+    /* 获取时间戳 now 所对应的bucket的时间范围
+     *
+     * 以duration是28s，size是10为例，这种情况下mDuration不能被buckets_.size()整除
+     * */
     void getBucketInfo(TimePoint timePoint, size_t* bucketIdx, TimePoint* bucketStart,
         TimePoint* nextBucketStart);
 
@@ -126,6 +127,8 @@ public:
 private:
     /* 清除bucktes数组中过时的数据 */
     size_t updateBuckets(TimePoint now);
+    bool addValueAggregated(
+        TimePoint now, const ValueType& total, uint64_t nsamples);
 
     TimePoint mFirstTime;
     TimePoint mLatestTime;
@@ -133,5 +136,7 @@ private:
     Bucket mTotal; //一个记录所有数据的bucket
     std::vector<Bucket> mBuckets;
 };
+
+#include "BucketTimeSeries-inl.h"
 
 #endif //PERFORMANCE_BUCKETEDTIMESERIES_H
