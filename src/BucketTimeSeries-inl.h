@@ -1,13 +1,15 @@
 //
 // Created by DELL on 2021/6/16.
 //
-#include "BucketedTimeSeries.h"
 
-template <typename VT, typename CT>
-BucketedTimeSeries<VT, CT>::BucketedTimeSeries(
+#ifndef PERFORMANCE_BUCKETTIMESERIES_INL_H
+#define PERFORMANCE_BUCKETTIMESERIES_INL_H
+
+template <typename VT>
+BucketedTimeSeries<VT>::BucketedTimeSeries(
     size_t numBuckets, Duration duration)
     : mFirstTime(Duration(1))
-    , mLatestTime(Duration())
+    , mLatestTime(Duration(0))
     , mDuration(duration)
 {
     if (numBuckets > size_t(mDuration.count())) {
@@ -17,8 +19,8 @@ BucketedTimeSeries<VT, CT>::BucketedTimeSeries(
     mBuckets.resize(numBuckets, Bucket());
 }
 
-template <typename VT, typename CT>
-bool BucketedTimeSeries<VT, CT>::addValue(TimePoint now, const ValueType& value, uint64_t count)
+template <typename VT >
+bool BucketedTimeSeries<VT>::addValue(TimePoint now, const ValueType& value, uint64_t count)
 {
     int bucketIndex;
     if (isEmpty()) {
@@ -44,8 +46,8 @@ bool BucketedTimeSeries<VT, CT>::addValue(TimePoint now, const ValueType& value,
     return true;
 }
 
-template <typename VT, typename CT>
-bool BucketedTimeSeries<VT, CT>::addValueAggregated(TimePoint now, const ValueType& total, uint64_t nsamples)
+template <typename VT >
+bool BucketedTimeSeries<VT >::addValueAggregated(TimePoint now, const ValueType& total, uint64_t nsamples)
 {
     int bucketIndex;
     if (isEmpty()) {
@@ -71,29 +73,29 @@ bool BucketedTimeSeries<VT, CT>::addValueAggregated(TimePoint now, const ValueTy
     return true;
 }
 
-template <typename VT, typename CT>
-bool BucketedTimeSeries<VT, CT>::isEmpty()
+template <typename VT >
+bool BucketedTimeSeries<VT >::isEmpty()
 {
     // 在构造函数中已经把mFirstTime设置为较大值，如果有数据
     // 插入，那么mFirstTime不会是较大值
     return mFirstTime > mLatestTime;
 }
 
-template <typename VT, typename CT>
-size_t BucketedTimeSeries<VT, CT>::update(TimePoint now)
+template <typename VT >
+size_t BucketedTimeSeries<VT >::update(TimePoint now)
 {
     if (isEmpty()) {
         mFirstTime = now;
     }
     // 如果传入的时间没有当前有记录的时间新，那么不用管它
     if (now <= mLatestTime) {
-        return getBucketIdx(mLatestTime);
+        return getBucketIndex(mLatestTime);
     }
     return updateBuckets(now);
 }
 
-template <typename VT, typename CT>
-void BucketedTimeSeries<VT, CT>::clear()
+template <typename VT >
+void BucketedTimeSeries<VT >::clear()
 {
     for (Bucket& bucket : mBuckets) {
         bucket.clear();
@@ -103,16 +105,29 @@ void BucketedTimeSeries<VT, CT>::clear()
     mLatestTime = TimePoint();
 }
 
-template <typename VT, typename CT>
-size_t BucketedTimeSeries<VT, CT>::getBucketIndex(TimePoint now)
+/*
+ * bucket index 的计算策略：
+ *
+ * buckets_.size() 有可能不能整除 duration_（如duration是28s，size是10），这种情况下
+ * 有一些bucket容纳的数据会比其他的多，9个储存2s的buckets，1个储存10s的bucket。我们希望
+ * 将数据尽可能均匀地分布在各个bucket之间（而不是使最后一个bucket比所有其他bucket都大得多）
+ *
+ * buckets的策略是：假设每个bucket都拥有duration_的时间宽度，这样所有的buckets拥有
+ * buckets_.size() * duratoin_的时间宽度。
+ *
+ * 为此，当一个真实的时间戳传递进来时，我们需要先把timestamp乘以buckets_.size()来获得一个
+ * 模拟的内部bucket时间戳，然后把这个时间除以duration_就获得了timestamp对应的bucket index
+ */
+template <typename VT >
+size_t BucketedTimeSeries<VT >::getBucketIndex(TimePoint now)
 {
     // 获取当前时间周期中经历的一段duration
     auto timeInCurrentCycle = now.time_since_epoch() % mDuration;
     return timeInCurrentCycle.count() * mBuckets.size() / mDuration.count();
 }
 
-template <typename VT, typename CT>
-size_t BucketedTimeSeries<VT, CT>::updateBuckets(TimePoint now)
+template <typename VT >
+size_t BucketedTimeSeries<VT >::updateBuckets(TimePoint now)
 {
     size_t currentBucketIdx = getBucketIndex(now);
     TimePoint currentBucketStart;
@@ -147,8 +162,23 @@ size_t BucketedTimeSeries<VT, CT>::updateBuckets(TimePoint now)
     }
 }
 
-template <typename VT, typename CT>
-void BucketedTimeSeries<VT, CT>::getBucketInfo(
+/*
+ * bucket info 的计算策略：
+ *
+ * 以duration是28s，size是10为例，这种情况下 duration_不能被 buckets_.size() 整除
+ * 我们需要保证每个bucket的时间宽度是一个合适的值。
+ * （1）当一个3s的时间戳落进来时，我们先像getBucketIndex()中的那样获取一个内部的scaled的时间：
+ * 3*10=30s，然后除以28得到bucket index为1。
+ *
+ * （2）显然，我们可以得知index为1的 bucket 对应的内部scaled时间范围是[28,28+28)。
+ *
+ * （3）最后，将内部的scaled时间戳转换为原始的时间戳，需要 除以 buckets_.size()，向上取整还是
+ * 向下取整？为了让最后一个 bucket 的时间范围没有损失，我们选择向上取整。
+ *
+ * 在这里，每五个bucket对应的时间宽度为3、3、3、3、2，每五个一循环。
+ */
+template <typename VT >
+void BucketedTimeSeries<VT >::getBucketInfo(
     TimePoint timePoint, size_t* bucketIdx, TimePoint* bucketStart, TimePoint* nextBucketStart)
 {
     using TimeInt = typename Duration::rep;
@@ -157,20 +187,22 @@ void BucketedTimeSeries<VT, CT>::getBucketInfo(
     TimeInt scaledTime = timeMod.count() * TimeInt(mBuckets.size());
     *bucketIdx = size_t(scaledTime / mDuration.count());
 
+    std::cout << "bucketIdx:" << *bucketIdx <<"\n";
+
     TimeInt scaledBucketStart = scaledTime - scaledTime % mDuration.count();
     TimeInt scaledNextBucketStart = scaledTime + mDuration.count();
     TimeInt numFullDurations = timePoint.time_since_epoch() / mDuration;
-    *bucketStart = Duration(scaledBucketStart + mBuckets.size() - 1 / mBuckets.size())
-        + TimePoint(numFullDurations * mDuration);
-    *nextBucketStart = Duration(scaledNextBucketStart + mBuckets.size() - 1 / mBuckets.size())
-        + TimePoint(numFullDurations * mDuration);
+    *bucketStart = Duration((scaledBucketStart + mBuckets.size() - 1) / mBuckets.size())
+                   + TimePoint(numFullDurations * mDuration);
+    *nextBucketStart = Duration((scaledNextBucketStart + mBuckets.size() - 1) / mBuckets.size())
+                       + TimePoint(numFullDurations * mDuration);
 }
 
-template <typename VT, typename CT>
-typename CT::time_point BucketedTimeSeries<VT, CT>::getEarliestTime()
+template <typename VT >
+std::chrono::steady_clock::time_point BucketedTimeSeries<VT>::getEarliestTime()
 {
-    if (isEmpty()()) {
-        return TimePoint();
+    if (isEmpty() ){
+        return TimePoint{};
     }
 
     TimePoint earliestTime;
@@ -179,6 +211,7 @@ typename CT::time_point BucketedTimeSeries<VT, CT>::getEarliestTime()
     TimePoint nextBucketStart;
     getBucketInfo(
         mLatestTime, &currentBucket, &currentBucketStart, &nextBucketStart);
+    //    TODO:earliestTime在这里出现问题
     earliestTime = nextBucketStart - mDuration;
     earliestTime = std::max(earliestTime, mFirstTime);
 
@@ -187,8 +220,8 @@ typename CT::time_point BucketedTimeSeries<VT, CT>::getEarliestTime()
 
 /*---------------------------------------------------------------------*/
 
-template <typename VT, typename CT>
-uint64_t BucketedTimeSeries<VT, CT>::count(
+template <typename VT >
+uint64_t BucketedTimeSeries<VT >::count(
     TimePoint start, TimePoint end) const
 {
     uint64_t sample_count = 0;
@@ -206,8 +239,8 @@ uint64_t BucketedTimeSeries<VT, CT>::count(
     return sample_count;
 }
 
-template <typename VT, typename CT>
-VT BucketedTimeSeries<VT, CT>::sum(TimePoint start, TimePoint end) const
+template <typename VT >
+VT BucketedTimeSeries<VT >::sum(TimePoint start, TimePoint end) const
 {
     ValueType total = ValueType();
     forEachBucket(
@@ -224,8 +257,8 @@ VT BucketedTimeSeries<VT, CT>::sum(TimePoint start, TimePoint end) const
     return total;
 }
 
-template <typename VT, typename CT>
-double BucketedTimeSeries<VT, CT>::avg(TimePoint start, TimePoint end) const
+template <typename VT >
+double BucketedTimeSeries<VT >::avg(TimePoint start, TimePoint end) const
 {
     uint64_t sample_count = 0;
     ValueType total = ValueType();
@@ -246,30 +279,31 @@ double BucketedTimeSeries<VT, CT>::avg(TimePoint start, TimePoint end) const
     return double(total / sample_count);
 }
 
-template <typename VT, typename CT>
+template <typename VT >
 template <typename Interval>
-Interval BucketedTimeSeries<VT, CT>::elapsed()
+Interval BucketedTimeSeries<VT>::elapsed()
 {
     if (isEmpty())
-        return Duration(0);
-    return std::chrono::duration_cast<Interval>(mLatestTime - getEarliestTime() + Duration(1));
+        return Interval(0);
+    return std::chrono::duration_cast<Interval>
+        (mLatestTime - getEarliestTime()) + Interval(1);
 }
 
-template <typename VT, typename CT>
+template <typename VT>
 template <typename Interval>
-Interval BucketedTimeSeries<VT, CT>::elapsed(TimePoint start, TimePoint end)
+Interval BucketedTimeSeries<VT>::elapsed(TimePoint start, TimePoint end)
 {
     if (isEmpty())
-        return Duration(0);
+        return Interval(0);
     start = std::max(start, getEarliestTime());
     end = std::min(end, mLatestTime + Duration(1));
     end = std::max(start, end);
     return std::chrono::duration_cast<Interval>(end - start);
 }
 
-template <typename VT, typename CT>
+template <typename VT >
 template <typename Function>
-void BucketedTimeSeries<VT, CT>::forEachBucket(Function fn) const
+void BucketedTimeSeries<VT >::forEachBucket(Function fn) const
 {
     typedef typename Duration::rep TimeInt;
 
@@ -289,8 +323,8 @@ void BucketedTimeSeries<VT, CT>::forEachBucket(Function fn) const
     TimePoint fullDuration = TimePoint(numFullDurations * mDuration) - mDuration;
     TimePoint bucketStart;
     TimePoint nextBucketStart = Duration(
-                                    (scaledNextBucketStart + mBuckets.size() - 1) / mBuckets.size())
-        + fullDuration;
+        (scaledNextBucketStart + mBuckets.size() - 1) / mBuckets.size())
+                                + fullDuration;
     while (true) {
         ++idx;
         if (idx >= mBuckets.size()) {
@@ -303,8 +337,8 @@ void BucketedTimeSeries<VT, CT>::forEachBucket(Function fn) const
 
         bucketStart = nextBucketStart;
         nextBucketStart = Duration(
-                              (scaledNextBucketStart + mBuckets.size() - 1) / mBuckets.size())
-            + fullDuration;
+            (scaledNextBucketStart + mBuckets.size() - 1) / mBuckets.size())
+                          + fullDuration;
 
         bool ret = fn(mBuckets[idx], bucketStart, nextBucketStart);
         if (!ret) {
@@ -317,9 +351,9 @@ void BucketedTimeSeries<VT, CT>::forEachBucket(Function fn) const
     }
 }
 
-template <typename VT, typename CT>
+template <typename VT >
 template <typename Function>
-void BucketedTimeSeries<VT, CT>::forEachBucket(
+void BucketedTimeSeries<VT >::forEachBucket(
     TimePoint start, TimePoint end, Function fn) const
 {
     forEachBucket(
@@ -343,9 +377,9 @@ void BucketedTimeSeries<VT, CT>::forEachBucket(
         });
 }
 
-template <typename VT, typename CT>
+template <typename VT >
 template <typename ReturnType>
-ReturnType BucketedTimeSeries<VT, CT>::rangeAdjust(
+ReturnType BucketedTimeSeries<VT >::rangeAdjust(
     TimePoint bucketStart,
     TimePoint nextBucketStart,
     TimePoint start,
@@ -373,3 +407,6 @@ ReturnType BucketedTimeSeries<VT, CT>::rangeAdjust(
     double scale = (intervalEnd - intervalStart) * 1.f / (nextBucketStart - bucketStart);
     return input * scale;
 }
+
+
+#endif //PERFORMANCE_BUCKETTIMESERIES_INL_H

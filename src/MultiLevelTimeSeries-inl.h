@@ -1,11 +1,12 @@
 //
 // Created by DELL on 2021/6/16.
 //
-#include "MultiLevelTimeSeries.h"
 
+#ifndef PERFORMANCE_MULTILEVELTIMESERIES_INL_H
+#define PERFORMANCE_MULTILEVELTIMESERIES_INL_H
 
-template <typename VT, typename CT>
-MultiLevelTimeSeries<VT, CT>::MultiLevelTimeSeries(
+template <typename VT>
+MultiLevelTimeSeries<VT>::MultiLevelTimeSeries(
     size_t nBuckets, size_t nLevels, const Duration levelDurations[])
     : cachedTime_(), cachedSum_(0), cachedCount_(0) {
 
@@ -15,8 +16,8 @@ MultiLevelTimeSeries<VT, CT>::MultiLevelTimeSeries(
     }
 }
 
-template <typename VT, typename CT>
-MultiLevelTimeSeries<VT, CT>::MultiLevelTimeSeries(
+template <typename VT >
+MultiLevelTimeSeries<VT>::MultiLevelTimeSeries(
     size_t nBuckets, std::initializer_list<Duration> durations)
     : cachedTime_(), cachedSum_(0), cachedCount_(0) {
 
@@ -30,20 +31,20 @@ MultiLevelTimeSeries<VT, CT>::MultiLevelTimeSeries(
     }
 }
 
-template <typename VT, typename CT>
-void MultiLevelTimeSeries<VT, CT>::addValue(
+template <typename VT >
+void MultiLevelTimeSeries<VT>::addValue(
     TimePoint now, const ValueType& val) {
     addValue(now, val, 1);
 }
 
-template <typename VT, typename CT>
-void MultiLevelTimeSeries<VT, CT>::addValue(
+template <typename VT >
+void MultiLevelTimeSeries<VT>::addValue(
     TimePoint now, const ValueType& val, uint64_t times) {
     addValueAggregated(now,val * times,times);
 }
 
-template <typename VT, typename CT>
-void MultiLevelTimeSeries<VT, CT>::addValueAggregated(
+template <typename VT >
+void MultiLevelTimeSeries<VT>::addValueAggregated(
     TimePoint now, const ValueType& total, uint64_t nsamples) {
     // 如果已经过了一段时间，需要将旧有缓存中的数据写入buckets
     if (cachedTime_ != now) {
@@ -55,16 +56,16 @@ void MultiLevelTimeSeries<VT, CT>::addValueAggregated(
     cachedCount_ += nsamples;
 }
 
-template <typename VT, typename CT>
-void MultiLevelTimeSeries<VT, CT>::update(TimePoint now) {
+template <typename VT>
+void MultiLevelTimeSeries<VT>::update(TimePoint now) {
     flush();
     for (size_t i = 0; i < levels_.size(); ++i) {
         levels_[i].update(now);
     }
 }
 
-template <typename VT, typename CT>
-void MultiLevelTimeSeries<VT, CT>::flush() {
+template <typename VT >
+void MultiLevelTimeSeries<VT>::flush() {
     if (cachedCount_ > 0) {
         for (size_t i = 0; i < levels_.size(); ++i) {
             levels_[i].addValueAggregated(cachedTime_, cachedSum_, cachedCount_);
@@ -74,8 +75,8 @@ void MultiLevelTimeSeries<VT, CT>::flush() {
     }
 }
 
-template <typename VT, typename CT>
-void MultiLevelTimeSeries<VT, CT>::clear() {
+template <typename VT>
+void MultiLevelTimeSeries<VT>::clear() {
     for (auto& level : levels_) {
         level.clear();
     }
@@ -84,3 +85,5 @@ void MultiLevelTimeSeries<VT, CT>::clear() {
     cachedSum_ = 0;
     cachedCount_ = 0;
 }
+
+#endif //PERFORMANCE_MULTILEVELTIMESERIES_INL_H
