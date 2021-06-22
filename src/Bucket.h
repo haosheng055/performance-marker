@@ -47,6 +47,7 @@ public:
     {
         mSum -= bucket.mSum;
         mCount -= bucket.mCount;
+        return *this;
     }
 
     double avg() const
