@@ -16,7 +16,7 @@ BucketedTimeSeries<VT>::BucketedTimeSeries(
         numBuckets = size_t(mDuration.count());
     }
 
-    mBuckets.resize(numBuckets, Bucket());
+    mBuckets.resize(numBuckets, BucketType());
 }
 
 template <typename VT >
@@ -69,12 +69,12 @@ bool BucketedTimeSeries<VT >::addValueAggregated(TimePoint now, const ValueType&
         bucketIndex = getBucketIndex(now);
     }
     mTotal.addValueAggregated(total, nsamples);
-    mBuckets[bucketIndex].addValueAggreted(total, nsamples);
+    mBuckets[bucketIndex].addValueAggregated(total, nsamples);
     return true;
 }
 
 template <typename VT >
-bool BucketedTimeSeries<VT >::isEmpty()
+bool BucketedTimeSeries<VT >::isEmpty() const
 {
     // 在构造函数中已经把mFirstTime设置为较大值，如果有数据
     // 插入，那么mFirstTime不会是较大值
@@ -97,7 +97,7 @@ size_t BucketedTimeSeries<VT >::update(TimePoint now)
 template <typename VT >
 void BucketedTimeSeries<VT >::clear()
 {
-    for (Bucket& bucket : mBuckets) {
+    for (BucketType& bucket : mBuckets) {
         bucket.clear();
     }
     mTotal.clear();
@@ -119,7 +119,7 @@ void BucketedTimeSeries<VT >::clear()
  * 模拟的内部bucket时间戳，然后把这个时间除以duration_就获得了timestamp对应的bucket index
  */
 template <typename VT >
-size_t BucketedTimeSeries<VT >::getBucketIndex(TimePoint now)
+size_t BucketedTimeSeries<VT >::getBucketIndex(TimePoint now) const
 {
     // 获取当前时间周期中经历的一段duration
     auto timeInCurrentCycle = now.time_since_epoch() % mDuration;
@@ -142,7 +142,7 @@ size_t BucketedTimeSeries<VT >::updateBuckets(TimePoint now)
     if (now < nextBucketStart) {
         return currentBucketIdx;
     } else if (now > nextBucketStart + mDuration) {
-        for (Bucket& bucket : mBuckets) {
+        for (BucketType& bucket : mBuckets) {
             bucket.clearBucket();
         }
         mTotal.clearBucket();
@@ -179,7 +179,7 @@ size_t BucketedTimeSeries<VT >::updateBuckets(TimePoint now)
  */
 template <typename VT >
 void BucketedTimeSeries<VT >::getBucketInfo(
-    TimePoint timePoint, size_t* bucketIdx, TimePoint* bucketStart, TimePoint* nextBucketStart)
+    TimePoint timePoint, size_t* bucketIdx, TimePoint* bucketStart, TimePoint* nextBucketStart) const
 {
     using TimeInt = typename Duration::rep;
 
@@ -197,7 +197,7 @@ void BucketedTimeSeries<VT >::getBucketInfo(
 }
 
 template <typename VT >
-std::chrono::steady_clock::time_point BucketedTimeSeries<VT>::getEarliestTime()
+std::chrono::steady_clock::time_point BucketedTimeSeries<VT>::getEarliestTime() const
 {
     if (isEmpty() ){
         return TimePoint{};
@@ -225,7 +225,7 @@ uint64_t BucketedTimeSeries<VT >::count(
     forEachBucket(
         start,
         end,
-        [&](const Bucket& bucket,
+        [&](const BucketType& bucket,
             TimePoint bucketStart,
             TimePoint nextBucketStart) -> bool {
             sample_count += this->rangeAdjust(
@@ -243,7 +243,7 @@ VT BucketedTimeSeries<VT >::sum(TimePoint start, TimePoint end) const
     forEachBucket(
         start,
         end,
-        [&](const Bucket& bucket,
+        [&](const BucketType& bucket,
             TimePoint bucketStart,
             TimePoint nextBucketStart) -> bool {
             total += this->rangeAdjust(
@@ -262,7 +262,7 @@ double BucketedTimeSeries<VT >::avg(TimePoint start, TimePoint end) const
     forEachBucket(
         start,
         end,
-        [&](const Bucket& bucket,
+        [&](const BucketType& bucket,
             TimePoint bucketStart,
             TimePoint nextBucketStart) -> bool {
             sample_count += this->template rangeAdjust(
@@ -278,7 +278,7 @@ double BucketedTimeSeries<VT >::avg(TimePoint start, TimePoint end) const
 
 template <typename VT >
 template <typename Interval>
-Interval BucketedTimeSeries<VT>::elapsed()
+Interval BucketedTimeSeries<VT>::elapsed() const
 {
     if (isEmpty())
         return Interval(0);
@@ -288,7 +288,7 @@ Interval BucketedTimeSeries<VT>::elapsed()
 
 template <typename VT>
 template <typename Interval>
-Interval BucketedTimeSeries<VT>::elapsed(TimePoint start, TimePoint end)
+Interval BucketedTimeSeries<VT>::elapsed(TimePoint start, TimePoint end) const
 {
     if (isEmpty())
         return Interval(0);
@@ -355,7 +355,7 @@ void BucketedTimeSeries<VT >::forEachBucket(
 {
     forEachBucket(
         [&start, &end, &fn](
-            const Bucket& bucket,
+            const BucketType& bucket,
             TimePoint bucketStart,
             TimePoint nextBucketStart) -> bool {
             // 如果当前bucket的结束窗口 < 我们指定的start, 说明还没有
