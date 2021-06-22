@@ -187,8 +187,6 @@ void BucketedTimeSeries<VT >::getBucketInfo(
     TimeInt scaledTime = timeMod.count() * TimeInt(mBuckets.size());
     *bucketIdx = size_t(scaledTime / mDuration.count());
 
-    std::cout << "bucketIdx:" << *bucketIdx <<"\n";
-
     TimeInt scaledBucketStart = scaledTime - scaledTime % mDuration.count();
     TimeInt scaledNextBucketStart = scaledTime + mDuration.count();
     TimeInt numFullDurations = timePoint.time_since_epoch() / mDuration;
@@ -211,7 +209,6 @@ std::chrono::steady_clock::time_point BucketedTimeSeries<VT>::getEarliestTime()
     TimePoint nextBucketStart;
     getBucketInfo(
         mLatestTime, &currentBucket, &currentBucketStart, &nextBucketStart);
-    //    TODO:earliestTime在这里出现问题
     earliestTime = nextBucketStart - mDuration;
     earliestTime = std::max(earliestTime, mFirstTime);
 
@@ -276,7 +273,7 @@ double BucketedTimeSeries<VT >::avg(TimePoint start, TimePoint end) const
         });
     if (sample_count == 0)
         return 0.0;
-    return double(total / sample_count);
+    return double(total * 1.0 / sample_count);
 }
 
 template <typename VT >

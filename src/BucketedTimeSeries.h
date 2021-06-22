@@ -3,7 +3,7 @@
  *
  * Author: haosheng (sheng.hao@duobei.com)
  *
- * Date: 2021/6/16
+ * Date: 2021/6/15
  *
  */
 
@@ -53,13 +53,13 @@ public:
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
     ReturnType countRate()
     {
-        return ReturnType(mTotal.mCount / elapsed<Interval>().count());
+        return ReturnType(mTotal.mCount * 1.0 / elapsed<Interval>().count());
     }
 
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
     ReturnType countRate(TimePoint start, TimePoint end)
     {
-        uint64_t intervalCount = count(start, end);
+        ReturnType intervalCount = count(start, end) * 1.0;
         Interval interval = elapsed<Interval>(start, end);
         return ReturnType(intervalCount / interval.count());
     }
@@ -73,7 +73,7 @@ public:
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
     ReturnType rate(TimePoint start, TimePoint end)
     {
-        uint64_t intervalSum = sum(start, end);
+        ReturnType intervalSum = sum(start, end) * 1.0;
         Interval interval = elapsed<Interval>(start, end);
         return ReturnType(intervalSum / interval.count());
     }
@@ -104,7 +104,7 @@ public:
     Interval elapsed(TimePoint start, TimePoint end);
 
     template <typename Function>
-    void forEachBucket(Function function) const;
+    void forEachBucket(Function fn) const;
 
     template <typename Function>
     void forEachBucket(TimePoint start, TimePoint end, Function fn) const;
@@ -127,6 +127,7 @@ public:
 private:
     /* 清除bucktes数组中过时的数据 */
     size_t updateBuckets(TimePoint now);
+
     bool addValueAggregated(
         TimePoint now, const ValueType& total, uint64_t nsamples);
 
