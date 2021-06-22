@@ -17,18 +17,22 @@ class Bucket {
 public:
     using ValueType = T;
 
-    Bucket(): mSum(ValueType()), mCount(0) {}
-
-    void addValue(const ValueType &value,const uint64_t& count)
+    Bucket()
+        : mSum(ValueType())
+        , mCount(0)
     {
-        mSum+=value*count;
-        mCount+=count;
     }
 
-    void addValueAggregated(const ValueType &total,const uint64_t& count)
+    void addValue(const ValueType& value, const uint64_t& count)
     {
-        mSum+=total;
-        mCount+=count;
+        mSum += value * count;
+        mCount += count;
+    }
+
+    void addValueAggregated(const ValueType& total, const uint64_t& count)
+    {
+        mSum += total;
+        mCount += count;
     }
 
     void clearBucket()
@@ -39,7 +43,7 @@ public:
 
     Bucket& operator+=(const Bucket& bucket)
     {
-        addValue(bucket.mSum,bucket.mCount);
+        addValue(bucket.mSum, bucket.mCount);
         return *this;
     }
 
@@ -52,7 +56,7 @@ public:
 
     double avg() const
     {
-        if(mCount == 0)
+        if (mCount == 0)
             return ValueType();
         auto sumf = double(mSum);
         auto countf = double(mCount);
