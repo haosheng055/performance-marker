@@ -77,8 +77,8 @@ public:
     /* 返回给定时间level中的数据count（所有bucket） */
     uint64_t count(size_t level) const {
         uint64_t total = 0;
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            total += buckets_.getByIndex(b).count(level);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            total += mBuckets.getByIndex(b).count(level);
         }
         return total;
     }
@@ -86,8 +86,8 @@ public:
     /* 返回给定时间范围中的数据count（所有bucket）。  */
     uint64_t count(TimePoint start, TimePoint end) const {
         uint64_t total = 0;
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            total += buckets_.getByIndex(b).count(start, end);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            total += mBuckets.getByIndex(b).count(start, end);
         }
         return total;
     }
@@ -95,8 +95,8 @@ public:
     /* 返回给定时间等级中的数据sum（所有bucket中）。 */
     ValueType sum(size_t level) const {
         ValueType total = ValueType();
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            total += buckets_.getByIndex(b).sum(level);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            total += mBuckets.getByIndex(b).sum(level);
         }
         return total;
     }
@@ -104,8 +104,8 @@ public:
     /* 返回给定时间范围中的数据sum（所有bucket）。 */
     ValueType sum(TimePoint start, TimePoint end) const {
         ValueType total = ValueType();
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            total += buckets_.getByIndex(b).sum(start, end);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            total += mBuckets.getByIndex(b).sum(start, end);
         }
         return total;
     }
@@ -115,9 +115,9 @@ public:
     ReturnType avg(size_t level) const {
         auto total = ValueType();
         uint64_t nsamples = 0;
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            total += buckets_.getByIndex(b).sum(level);
-            nsamples += buckets_.getByIndex(b).count(level);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            total += mBuckets.getByIndex(b).sum(level);
+            nsamples += mBuckets.getByIndex(b).count(level);
         }
         if(nsamples == 0){
             return ReturnType();
@@ -130,9 +130,9 @@ public:
     ReturnType avg(TimePoint start, TimePoint end) const {
         auto total = ValueType();
         uint64_t nsamples = 0;
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            total += buckets_.getByIndex(b).sum(start,end);
-            nsamples += buckets_.getByIndex(b).count(start,end);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            total += mBuckets.getByIndex(b).sum(start,end);
+            nsamples += mBuckets.getByIndex(b).count(start,end);
         }
         if(nsamples == 0){
             return ReturnType();
@@ -148,8 +148,8 @@ public:
     ReturnType rate(size_t level) const {
         auto total = ValueType();
         Interval elapsed(0);
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            const auto& levelObj = buckets_.getByIndex(b).getLevel(level);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            const auto& levelObj = mBuckets.getByIndex(b).getLevel(level);
             total += levelObj.sum();
             elapsed = std::max(elapsed, levelObj.template elapsed<Interval>());
         }
@@ -167,8 +167,8 @@ public:
     ReturnType rate(TimePoint start, TimePoint end) const {
         auto total = ValueType();
         Interval elapsed(0);
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            const auto& levelObj = buckets_.getByIndex(b).getLevel(start);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            const auto& levelObj = mBuckets.getByIndex(b).getLevel(start);
             total += levelObj.sum(start,end);
             elapsed = std::max(elapsed, levelObj.template elapsed<Interval>(start,end));
         }
@@ -186,8 +186,8 @@ public:
     ReturnType countRate(size_t level) const {
         auto total = count(level);
         Interval elapsed(0);
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            const auto& levelObj = buckets_.getByIndex(b).getLevel(level);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            const auto& levelObj = mBuckets.getByIndex(b).getLevel(level);
             elapsed = std::max(elapsed, levelObj.template elapsed<Interval>());
         }
         if(elapsed == Interval(0)){
@@ -204,8 +204,8 @@ public:
     ReturnType countRate(TimePoint start, TimePoint end) const {
         auto total = count(start,end);
         Interval elapsed(0);
-        for (size_t b = 0; b < buckets_.getNumBuckets(); ++b) {
-            const auto& levelObj = buckets_.getByIndex(b).getLevel(start);
+        for (size_t b = 0; b < mBuckets.getNumBuckets(); ++b) {
+            const auto& levelObj = mBuckets.getByIndex(b).getLevel(start);
             elapsed = std::max(elapsed, levelObj.template elapsed<Interval>(start,end));
         }
         if(elapsed == Interval(0)){
@@ -245,27 +245,27 @@ public:
     std::string getString(TimePoint start, TimePoint end) const;
 
     /* 返回每个bucket负责范围的宽度 */
-    ValueType getBucketSize() const { return buckets_.getBucketSize(); }
+    ValueType getBucketSize() const { return mBuckets.getBucketSize(); }
 
-    ValueType getMin() const { return buckets_.getMin(); }
+    ValueType getMin() const { return mBuckets.getMin(); }
 
-    ValueType getMax() const { return buckets_.getMax(); }
+    ValueType getMax() const { return mBuckets.getMax(); }
 
-    size_t getNumLevels() const { return buckets_.getByIndex(0).numLevels(); }
+    size_t getNumLevels() const { return mBuckets.getByIndex(0).numLevels(); }
 
     /* 返回buckets的数目 */
-    size_t getNumBuckets() const { return buckets_.getNumBuckets(); }
+    size_t getNumBuckets() const { return mBuckets.getNumBuckets(); }
 
     /*
      * 返回给定下标对应bucket的下边界值
      */
     ValueType getBucketMin(size_t bucketIdx) const {
-        return buckets_.getBucketMin(bucketIdx);
+        return mBuckets.getBucketMin(bucketIdx);
     }
 
     /* 返回给定下标对应bucket */
     const ContainerType& getBucket(size_t bucketIdx) const {
-        return buckets_.getByIndex(bucketIdx);
+        return mBuckets.getByIndex(bucketIdx);
     }
 
     /*
@@ -337,7 +337,7 @@ private:
         TimePoint end_;
     };
 
-    HistogramBuckets<ValueType> buckets_;
+    HistogramBuckets<ValueType> mBuckets;
 };
 
 #include "TimeseriesHistogram-inl.h"

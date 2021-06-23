@@ -16,32 +16,32 @@ TimeseriesHistogram<T>::TimeseriesHistogram(
     ValueType min,
     ValueType max,
     const ContainerType& defaultContainer)
-    : buckets_(bucketSize, min, max, defaultContainer) {}
+    : mBuckets(bucketSize, min, max, defaultContainer) {}
 
 template <typename T>
 void TimeseriesHistogram<T>::addValue(
     TimePoint now, const ValueType& value) {
-    buckets_.getByValue(value).addValue(now, value);
+    mBuckets.getByValue(value).addValue(now, value);
 }
 
 template <typename T>
 void TimeseriesHistogram<T>::addValue(
     TimePoint now, const ValueType& value, uint64_t times) {
-    buckets_.getByValue(value).addValue(now, value, times);
+    mBuckets.getByValue(value).addValue(now, value, times);
 }
 
 
 template <typename T>
 T TimeseriesHistogram<T>::getPercentileEstimate(
     double pct, size_t level) const {
-    return buckets_.getPercentileEstimate(
+    return mBuckets.getPercentileEstimate(
         pct / 100.0, CountFromLevel(level), AvgFromLevel(level));
 }
 
 template <typename T>
 T TimeseriesHistogram<T>::getPercentileEstimate(
     double pct, TimePoint start, TimePoint end) const {
-    return buckets_.getPercentileEstimate(
+    return mBuckets.getPercentileEstimate(
         pct / 100.0,
         CountFromInterval(start, end),
         AvgFromInterval<T>(start, end));
@@ -50,27 +50,27 @@ T TimeseriesHistogram<T>::getPercentileEstimate(
 template <typename T>
 size_t TimeseriesHistogram<T>::getPercentileBucketIdx(
     double pct, size_t level) const {
-    return buckets_.getPercentileBucketIdx(pct / 100.0, CountFromLevel(level));
+    return mBuckets.getPercentileBucketIdx(pct / 100.0, CountFromLevel(level));
 }
 
 template <typename T>
 size_t TimeseriesHistogram<T>::getPercentileBucketIdx(
     double pct, TimePoint start, TimePoint end) const {
-    return buckets_.getPercentileBucketIdx(
+    return mBuckets.getPercentileBucketIdx(
         pct / 100.0, CountFromInterval(start, end));
 }
 
 template <typename T>
 void TimeseriesHistogram<T>::clear() {
-    for (size_t i = 0; i < buckets_.getNumBuckets(); i++) {
-        buckets_.getByIndex(i).clear();
+    for (size_t i = 0; i < mBuckets.getNumBuckets(); i++) {
+        mBuckets.getByIndex(i).clear();
     }
 }
 
 template <typename T>
 void TimeseriesHistogram<T>::update(TimePoint now) {
-    for (size_t i = 0; i < buckets_.getNumBuckets(); i++) {
-        buckets_.getByIndex(i).update(now);
+    for (size_t i = 0; i < mBuckets.getNumBuckets(); i++) {
+        mBuckets.getByIndex(i).update(now);
     }
 }
 
@@ -86,12 +86,12 @@ std::string TimeseriesHistogram<T>::getString(size_t level) const {
         + "99%: " + std::to_string(getPercentileEstimate(99,level)) + ", "
         + "90%: " + std::to_string(getPercentileEstimate(90,level)) + ", "
         + "80%: " + std::to_string(getPercentileEstimate(80,level)) + "\n";
-    for (size_t i = 0; i < buckets_.getNumBuckets(); i++) {
+    for (size_t i = 0; i < mBuckets.getNumBuckets(); i++) {
         if (i > 0) {
             result.append("\n");
         }
-        const ContainerType& cont = buckets_.getByIndex(i);
-        result += "bucketMin: " + std::to_string(buckets_.getBucketMin(i))
+        const ContainerType& cont = mBuckets.getByIndex(i);
+        result += "bucketMin: " + std::to_string(mBuckets.getBucketMin(i))
             + " count: " + std::to_string(cont.count(level))
             + " avg: " + std::to_string(cont.avg(level))
             + " rate: " + std::to_string(cont.template rate(level));
@@ -105,12 +105,12 @@ std::string TimeseriesHistogram<T>::getString(
     TimePoint start, TimePoint end) const {
     std::string result;
 
-    for (size_t i = 0; i < buckets_.getNumBuckets(); i++) {
+    for (size_t i = 0; i < mBuckets.getNumBuckets(); i++) {
         if (i > 0) {
             result.append(",");
         }
-        const ContainerType& cont = buckets_.getByIndex(i);
-        result += "bucketMin: " + std::to_string(buckets_.getBucketMin(i))
+        const ContainerType& cont = mBuckets.getByIndex(i);
+        result += "bucketMin: " + std::to_string(mBuckets.getBucketMin(i))
                   + "count: " + std::to_string(cont.count(start,end))
                   + "avg: " + std::to_string(cont.avg(start,end)) + "\n";
     }

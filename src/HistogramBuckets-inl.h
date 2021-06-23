@@ -11,7 +11,7 @@ HistogramBuckets<T>::HistogramBuckets(
     ValueType min,
     ValueType max,
     const BucketType& defaultBucket)
-    : bucketSize_(bucketSize), min_(min), max_(max)
+    : mBucketSize(bucketSize), mMin(min), mMax(max)
 {
 
     int64_t numBuckets = int64_t((max - min) / bucketSize);
@@ -21,19 +21,19 @@ HistogramBuckets<T>::HistogramBuckets(
     }
     // 增加两个额外的bucket，一个负责小于min的值，另一个负责大于max的值
     numBuckets += 2;
-    buckets_.assign(size_t(numBuckets), defaultBucket);
+    mBuckets.assign(size_t(numBuckets), defaultBucket);
 }
 
 template <typename T>
 size_t HistogramBuckets<T>::getBucketIdx(ValueType value) const
 {
-    if (value < min_) {
+    if (value < mMin) {
         return 0;
-    } else if (value >= max_) {
-        return buckets_.size() - 1;
+    } else if (value >= mMax) {
+        return mBuckets.size() - 1;
     } else {
         // the 1 is the below_min bucket
-        return size_t(((value - min_) / bucketSize_) + 1);
+        return size_t(((value - mMin) / mBucketSize) + 1);
     }
 }
 
@@ -43,8 +43,8 @@ uint64_t HistogramBuckets<T>::computeTotalCount(
     CountFn countFromBucket) const
 {
     uint64_t count = 0;
-    for (size_t n = 0; n < buckets_.size(); ++n) {
-        count += countFromBucket(const_cast<const BucketType&>(buckets_[n]));
+    for (size_t n = 0; n < mBuckets.size(); ++n) {
+        count += countFromBucket(const_cast<const BucketType&>(mBuckets[n]));
     }
     return count;
 }
@@ -58,15 +58,15 @@ size_t HistogramBuckets<T>::getPercentileBucketIdx(
     double* highPct) const
 {
 
-    auto numBuckets = buckets_.size();
+    auto numBuckets = mBuckets.size();
 
     // 计算出每个bucket中数据的count
     std::vector<uint64_t> counts(numBuckets);
     uint64_t totalCount = 0;
     for (size_t n = 0; n < numBuckets; ++n) {
         uint64_t bucketCount =
-            countFromBucket(const_cast<const BucketType&>(buckets_[n]));
-        bucketCount = buckets_[n].count(1);
+            countFromBucket(const_cast<const BucketType&>(mBuckets[n]));
+        bucketCount = mBuckets[n].count(1);
         counts[n] = bucketCount;
         totalCount += bucketCount;
     }
@@ -129,22 +129,22 @@ T HistogramBuckets<T>::getPercentileEstimate(
         // Unlikely to have exact equality,
         // but just return the bucket average in this case.
         // We handle this here to avoid division by 0 below.
-        return avgFromBucket(buckets_[bucketIdx]);
+        return avgFromBucket(mBuckets[bucketIdx]);
     }
 
     // 计算这个bucket 存储数据的平均值、最大值、最小值。
-    ValueType avg = avgFromBucket(buckets_[bucketIdx]);
+    ValueType avg = avgFromBucket(mBuckets[bucketIdx]);
     ValueType low;
     ValueType high;
     if (bucketIdx == 0) {
-        high = min_;
+        high = mMin;
         low = high - (2 * (high - avg));
         // Adjust low in case it wrapped
         if (low > avg) {
             low = std::numeric_limits<ValueType>::min();
         }
-    } else if (bucketIdx == buckets_.size() - 1) {
-        low = max_;
+    } else if (bucketIdx == mBuckets.size() - 1) {
+        low = mMax;
         high = low + (2 * (avg - low));
         // Adjust high in case it wrapped
         if (high < avg) {

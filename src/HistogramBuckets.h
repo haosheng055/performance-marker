@@ -39,30 +39,30 @@ public:
         const BucketType& defaultBucket);
 
     /* 返回每个bucket负责的范围宽度 */
-    ValueType getBucketSize() const { return bucketSize_; }
+    ValueType getBucketSize() const { return mBucketSize; }
 
-    ValueType getMin() const { return min_; }
+    ValueType getMin() const { return mMin; }
 
-    ValueType getMax() const { return max_; }
+    ValueType getMax() const { return mMax; }
 
     /*
      * 返回buckets的数目
      *
      * 这包括负责[min,max)范围的bucket以及额外的两个bucket
      */
-    size_t getNumBuckets() const { return buckets_.size(); }
+    size_t getNumBuckets() const { return mBuckets.size(); }
 
     /* 返回给定的value值落入的bucket下标 */
     size_t getBucketIdx(ValueType value) const;
 
     /* 返回给定的value值落入的bucket */
     BucketType& getByValue(ValueType value) {
-        return buckets_[getBucketIdx(value)];
+        return mBuckets[getBucketIdx(value)];
     }
 
     /* 返回给定的value值落入的bucket */
     const BucketType& getByValue(ValueType value) const {
-        return buckets_[getBucketIdx(value)];
+        return mBuckets[getBucketIdx(value)];
     }
 
     /*
@@ -71,9 +71,9 @@ public:
      * 注意：下标为0的bucket负责处理比min小的值，而下标为1的bucket是负责给定范围的
      * 第一个bucket。
      */
-    BucketType& getByIndex(size_t idx) { return buckets_[idx]; }
+    BucketType& getByIndex(size_t idx) { return mBuckets[idx]; }
 
-    const BucketType& getByIndex(size_t idx) const { return buckets_[idx]; }
+    const BucketType& getByIndex(size_t idx) const { return mBuckets[idx]; }
 
     /*
      * 返回给定index处bucket的左边界。
@@ -81,15 +81,16 @@ public:
      * 注意：每个bucket存储的值范围要么是[bucketMin,bucketMin+bucketSize)，要么是
      * [bucketMin,max)。
      */
-    ValueType getBucketMin(size_t idx) const {
+    ValueType getBucketMin(size_t idx) const
+    {
         if (idx == 0) {
             return std::numeric_limits<ValueType>::min();
         }
-        if (idx == buckets_.size() - 1) {
-            return max_;
+        if (idx == mBuckets.size() - 1) {
+            return mMax;
         }
 
-        return ValueType(min_ + ((idx - 1) * bucketSize_));
+        return ValueType(mMin + ((idx - 1) * mBucketSize));
     }
 
     /*
@@ -99,11 +100,11 @@ public:
      * [bucketMin,max)。
      */
     ValueType getBucketMax(size_t idx) const {
-        if (idx == buckets_.size() - 1) {
+        if (idx == mBuckets.size() - 1) {
             return std::numeric_limits<ValueType>::max();
         }
 
-        return ValueType(min_ + (idx * bucketSize_));
+        return ValueType(mMin + (idx * mBucketSize));
     }
 
     /**
@@ -162,22 +163,21 @@ public:
      * 第一个bucket。
      */
     typename std::vector<BucketType>::const_iterator begin() const {
-        return buckets_.begin();
+        return mBuckets.begin();
     }
     typename std::vector<BucketType>::iterator begin() {
-        return buckets_.begin();
+        return mBuckets.begin();
     }
     typename std::vector<BucketType>::const_iterator end() const {
-        return buckets_.end();
+        return mBuckets.end();
     }
-    typename std::vector<BucketType>::iterator end() { return buckets_.end(); }
+    typename std::vector<BucketType>::iterator end() { return mBuckets.end(); }
 
 private:
-    static constexpr bool kIsExact = std::numeric_limits<ValueType>::is_exact;
-    ValueType bucketSize_;
-    ValueType min_;
-    ValueType max_;
-    std::vector<BucketType> buckets_;
+    ValueType mBucketSize;
+    ValueType mMin;
+    ValueType mMax;
+    std::vector<BucketType> mBuckets;
 };
 
 #include "HistogramBuckets-inl.h"
