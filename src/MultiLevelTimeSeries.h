@@ -53,7 +53,7 @@ public:
     void addValue(TimePoint now, const ValueType& val);
 
     /*
-     * 在所有level中，添加给定次数时间now处的val值。
+     * 在所有level中，添加给定次数的、时间now处的val值。
      */
     void addValue(TimePoint now, const ValueType& val, uint64_t times);
 
@@ -88,9 +88,7 @@ public:
      * 在获取avg信息之前，应该先调用update()或者flush()，用来清除过时的数据，或者
      * 将缓存中的数据写入到每个level中。
      */
-    double avg(size_t level) const {
-        return getLevel(level).avg();
-    }
+    double avg(size_t level) const { return getLevel(level).avg(); }
 
     /*
      * 返回给定level上跟踪的所有数据的rate (即sum / elapsed time)。
@@ -100,7 +98,8 @@ public:
      * 将缓存中的数据写入到每个level中。
      */
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
-    ReturnType rate(size_t level) const {
+    ReturnType rate(size_t level) const
+    {
         return getLevel(level).template rate<ReturnType, Interval>();
     }
 
@@ -112,61 +111,68 @@ public:
      * 将缓存中的数据写入到每个level中。
      */
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
-    ReturnType countRate(size_t level) const {
+    ReturnType countRate(size_t level) const
+    {
         return getLevel(level).template countRate<ReturnType, Interval>();
     }
 
-    uint64_t count(Duration duration) const {
+    uint64_t count(Duration duration) const
+    {
         return getLevelByDuration(duration).count();
     }
 
-    ValueType sum(Duration duration) const {
+    ValueType sum(Duration duration) const
+    {
         return getLevelByDuration(duration).sum();
     }
 
-    double avg(Duration duration) const {
+    double avg(Duration duration) const
+    {
         return getLevelByDuration(duration).avg();
     }
 
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
-    ReturnType rate(Duration duration) const {
+    ReturnType rate(Duration duration) const
+    {
         return getLevelByDuration(duration).template rate<ReturnType, Interval>();
     }
 
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
-    ReturnType countRate(Duration duration) const {
+    ReturnType countRate(Duration duration) const
+    {
         return getLevelByDuration(duration)
             .template countRate<ReturnType, Interval>();
     }
 
-    uint64_t count(TimePoint start, TimePoint end) const {
+    uint64_t count(TimePoint start, TimePoint end) const
+    {
         return getLevel(start).count(start, end);
     }
 
-    ValueType sum(TimePoint start, TimePoint end) const {
+    ValueType sum(TimePoint start, TimePoint end) const
+    {
         return getLevel(start).sum(start, end);
     }
 
-    double avg(TimePoint start, TimePoint end) const {
+    double avg(TimePoint start, TimePoint end) const
+    {
         return getLevel(start).avg(start, end);
     }
 
     template <typename ReturnType = double, typename Interval = std::chrono::seconds>
-    ReturnType rate(TimePoint start, TimePoint end) const {
+    ReturnType rate(TimePoint start, TimePoint end) const
+    {
         return getLevel(start).template rate<ReturnType, Interval>(start, end);
     }
 
-    size_t numBuckets() const {
-        return mLevels[0].numBuckets();
-    }
+    size_t numBuckets() const { return mLevels[0].numBuckets();}
 
     size_t numLevels() const { return mLevels.size(); }
 
-    const Level& getLevel(size_t level) const {
-        return mLevels[level];
-    }
+    const Level& getLevel(size_t level) const { return mLevels[level]; }
 
-    const Level& getLevel(TimePoint start) const {
+    const Level& getLevel(TimePoint start) const
+    {
         for (Level & level : mLevels) {
             if (level.getLatestTime() - level.getDuration() <= start) {
                 return level;
@@ -175,7 +181,8 @@ public:
         return mLevels.back();
     }
 
-    const Level& getLevelByDuration(Duration duration) const {
+    const Level& getLevelByDuration(Duration duration) const
+    {
         for (const auto& level : mLevels) {
             if (level.getDuration() == duration) {
                 return level;
