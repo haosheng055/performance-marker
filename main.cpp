@@ -3,6 +3,7 @@
 
 #include "src/BucketedTimeSeries.h"
 #include "src/MultiLevelTimeSeries.h"
+#include "src/TimeseriesHistogram.h"
 
 using namespace std;
 
@@ -60,4 +61,21 @@ int main()
               //        << "elapsed: " << bucketedTimeSeries.elapsed().count() << "\n";
               << "rate: " << multiLevelTimeSeries.rate(1) << "\n"
               << "countRate: " << multiLevelTimeSeries.countRate(1) << "\n";
+    cout << "------------------------------------------" << endl;
+
+    cout << "TimeSeriesHistogram test:" << endl;
+    // cout << chrono::steady_clock::duration(1000000).count();
+    TimeseriesHistogram<double> timeseriesHistogram(
+        1000,0,10000,MultiLevelTimeSeries<double>
+    (10,{std::chrono::seconds(10),std::chrono::minutes(1)}));
+
+    timeseriesHistogram.addValue(chrono::steady_clock::now(),100);
+    std::this_thread::sleep_for(std::chrono::seconds (1));
+    timeseriesHistogram.addValue(chrono::steady_clock::now(),200);
+    timeseriesHistogram.addValue(chrono::steady_clock::now(),500);
+    timeseriesHistogram.addValue(chrono::steady_clock::now(),2000);
+    timeseriesHistogram.update(std::chrono::steady_clock::now());
+
+    std::cout << timeseriesHistogram.getString(0);
+    cout << "------------------------------------------" << endl;
 }
