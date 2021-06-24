@@ -107,7 +107,7 @@ public:
         return ValueType(mMin + (idx * mBucketSize));
     }
 
-    /**
+    /*
      * 计算所有buckets（所有MultiLevelTimeSeries）中数据的counts
      *
      *
