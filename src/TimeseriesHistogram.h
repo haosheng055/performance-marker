@@ -11,6 +11,7 @@
 #define PERFORMANCE_TIMESERIESHISTOGRAM_H
 
 #include <string>
+#include <iomanip>
 
 #include "MultiLevelTimeSeries.h"
 #include "HistogramBuckets.h"

@@ -76,16 +76,18 @@ void TimeseriesHistogram<T>::update(TimePoint now) {
 
 template <typename T>
 std::string TimeseriesHistogram<T>::getString(size_t level) const {
-    std::string result;
-    result += "totalCount: " + std::to_string(count(level)) + ", "
-        + "totalSum: " + std::to_string(sum(level)) + ", "
-        + "avg: " + std::to_string(avg(level)) + ", "
-        + "rate: " + std::to_string(rate(level)) + ", "
-        + "countRate: " + std::to_string(countRate(level)) + ", "
-        + "99%: " + std::to_string(getPercentileEstimate(99,level)) + ", "
-        + "90%: " + std::to_string(getPercentileEstimate(90,level)) + ", "
-        + "80%: " + std::to_string(getPercentileEstimate(80,level)) + "\n";
-    return result;
+    std::stringstream result;
+    result.setf(std::ios::fixed);
+    result << std::setprecision(2);
+    result << "\t\t\"count\": " << count(level) << ",\n"
+        << "\t\t\"accu\": " << sum(level) << ",\n"
+        << "\t\t\"avg\": " << avg(level) << ",\n"
+        << "\t\t\"rate\": " << rate(level) << ",\n"
+        << "\t\t\"qps\": " << countRate(level) << ",\n"
+        << "\t\t\"99%\": " << getPercentileEstimate(99,level) << ",\n"
+        << "\t\t\"90%\": " << getPercentileEstimate(90,level) << ",\n"
+        << "\t\t\"80%\": " << getPercentileEstimate(80,level);
+    return result.str();
 }
 
 template <typename T>
