@@ -64,6 +64,11 @@ public:
         TimePoint now, const ValueType& total, uint64_t nsamples);
 
     /*
+     * 将缓存中的数据写入buckets,同时丢弃过时的数据
+     */
+    void update(TimePoint now);
+
+    /*
      * 返回给定level上跟踪的所有数据的count。
      *
      * 注意:
@@ -189,11 +194,6 @@ public:
             }
         }
     }
-
-    /*
-     * 将缓存中的数据写入buckets,同时将所有的Levels更新到传入的时间now,丢弃过时的数据
-     */
-    void update(TimePoint now);
 
     void clear();
 
