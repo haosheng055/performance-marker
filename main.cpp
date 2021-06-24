@@ -12,11 +12,11 @@ int main()
 {
     cout << "PerformanceMarker test:" << endl;
     PerformanceMarker::initialize("haosheng",5);
-
+//    report任务在0s之后开始
 //    TODO:第一个被加入的value不会被丢弃？？
     std::this_thread::sleep_for(chrono::seconds(2));
-    cout << "add value 100 int round 1\n";
-    SOL2_PERFORMANCE_COUNT64("testInt64",100);
+    cout << "add value 666 int round 1\n";
+    SOL2_PERFORMANCE_COUNT64("testInt64",666);
 
     std::this_thread::sleep_for(chrono::seconds(12));
     cout << "add value 10000 in round 3\n";
