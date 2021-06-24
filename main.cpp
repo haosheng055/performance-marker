@@ -4,78 +4,28 @@
 #include "src/BucketedTimeSeries.h"
 #include "src/MultiLevelTimeSeries.h"
 #include "src/TimeseriesHistogram.h"
+#include "src/PerformanceMarker.h"
 
 using namespace std;
 
 int main()
 {
-    std::chrono::steady_clock::duration cao[1];
-    cout << "bucket test:" << endl;
-    Bucket<double> bucket;
-    bucket.addValue(1,14);
-    cout << bucket.avg() << endl
-         << bucket.mSum << endl << bucket.mCount << endl;
-    cout << "------------------------------------------" << endl;
+    cout << "PerformanceMarker test:" << endl;
+    PerformanceMarker::initialize("haosheng",5);
 
-    cout << "BucketedTimeSeries test:" << endl;
-    // cout << chrono::steady_clock::duration(1000000).count();
-    BucketedTimeSeries<unsigned> bucketedTimeSeries(10,
-        std::chrono::seconds(10));
+//    TODO:第一个被加入的value不会被丢弃？？
+    std::this_thread::sleep_for(chrono::seconds(2));
+    cout << "add value 100 int round 1\n";
+    SOL2_PERFORMANCE_COUNT64("testInt64",100);
 
-    bucketedTimeSeries.addValue(chrono::steady_clock::now(),10000);
-    std::this_thread::sleep_for(std::chrono::seconds (11));
-    bucketedTimeSeries.addValue(chrono::steady_clock::now(),1);
-    bucketedTimeSeries.addValue(chrono::steady_clock::now(),2);
-    bucketedTimeSeries.addValue(chrono::steady_clock::now(),3);
+    std::this_thread::sleep_for(chrono::seconds(12));
+    cout << "add value 10000 in round 3\n";
+    SOL2_PERFORMANCE_COUNT64("testInt64",10000);
 
-    std::cout << "count: " << bucketedTimeSeries.count() << "\n"
-        << "sum: " << bucketedTimeSeries.sum() << "\n"
-        << "avg: " << bucketedTimeSeries.avg() <<"\n"
-//        << "elapsed: " << bucketedTimeSeries.elapsed().count() << "\n";
-        << "rate: " << bucketedTimeSeries.rate() << "\n"
-        << "countRate: " << bucketedTimeSeries.countRate() << "\n";
-    cout << "------------------------------------------" << endl;
+    std::this_thread::sleep_for(chrono::seconds(5));
+    cout << "add value 20000 in round 4\n";
+    SOL2_PERFORMANCE_COUNT64("testInt64",20000);
 
-    cout << "MultiLevelTimeSeries test:" << endl;
-    MultiLevelTimeSeries<unsigned> multiLevelTimeSeries
-        (10,{std::chrono::seconds(10),std::chrono::minutes(1)});
-
-    multiLevelTimeSeries.addValue(chrono::steady_clock::now(),1000);
-    std::this_thread::sleep_for(std::chrono::seconds (11));
-    multiLevelTimeSeries.addValue(chrono::steady_clock::now(),1);
-    multiLevelTimeSeries.addValue(chrono::steady_clock::now(),2);
-    multiLevelTimeSeries.addValue(chrono::steady_clock::now(),3);
-
-    multiLevelTimeSeries.update(chrono::steady_clock::now());
-    std::cout << "time level is 10 seconds: " << std::endl;
-    std::cout << "count: " << multiLevelTimeSeries.count(0) << "\n"
-              << "sum: " << multiLevelTimeSeries.sum(0) << "\n"
-              << "avg: " << multiLevelTimeSeries.avg(0) <<"\n"
-              //        << "elapsed: " << bucketedTimeSeries.elapsed().count() << "\n";
-              << "rate: " << multiLevelTimeSeries.rate(0) << "\n"
-              << "countRate: " << multiLevelTimeSeries.countRate(0) << "\n";
-    std::cout << "time level is 60 seconds: " << std::endl;
-    std::cout << "count: " << multiLevelTimeSeries.count(1) << "\n"
-              << "sum: " << multiLevelTimeSeries.sum(1) << "\n"
-              << "avg: " << multiLevelTimeSeries.avg(1) <<"\n"
-              //        << "elapsed: " << bucketedTimeSeries.elapsed().count() << "\n";
-              << "rate: " << multiLevelTimeSeries.rate(1) << "\n"
-              << "countRate: " << multiLevelTimeSeries.countRate(1) << "\n";
-    cout << "------------------------------------------" << endl;
-
-    cout << "TimeSeriesHistogram test:" << endl;
-    // cout << chrono::steady_clock::duration(1000000).count();
-    TimeseriesHistogram<double> timeseriesHistogram(
-        1000,0,10000,MultiLevelTimeSeries<double>
-    (10,{std::chrono::seconds(10),std::chrono::minutes(1)}));
-
-    timeseriesHistogram.addValue(chrono::steady_clock::now(),100);
-    std::this_thread::sleep_for(std::chrono::seconds (1));
-    timeseriesHistogram.addValue(chrono::steady_clock::now(),200);
-    timeseriesHistogram.addValue(chrono::steady_clock::now(),500);
-    timeseriesHistogram.addValue(chrono::steady_clock::now(),2000);
-    timeseriesHistogram.update(std::chrono::steady_clock::now());
-
-    std::cout << timeseriesHistogram.getString(0);
+    std::this_thread::sleep_for(chrono::seconds(10));
     cout << "------------------------------------------" << endl;
 }
