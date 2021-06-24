@@ -13,7 +13,7 @@ void PerformanceMarker::initialize(const std::string& prefix, uint32_t intervalS
 {
     mPrefix = prefix;
     mDuration = std::chrono::seconds(intervalSeconds);
-//    PerformanceMarker::getInstance();
+    PerformanceMarker::getInstance();
 }
 
 PerformanceMarker & PerformanceMarker::getInstance()
