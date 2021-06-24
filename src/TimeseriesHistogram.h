@@ -61,7 +61,7 @@ public:
         const ContainerType& defaultContainer);
 
     /*
-     * 使用给定的时间戳now 来更新底层的数据对象。
+     * 使用给定的时间戳 now 来更新底层的数据对象。
      *
      * 注意：在调用所有的查询函数之前，都应该调用此update函数，否则可能会使用过时的数据。
      */

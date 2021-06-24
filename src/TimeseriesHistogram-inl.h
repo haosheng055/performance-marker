@@ -77,7 +77,6 @@ void TimeseriesHistogram<T>::update(TimePoint now) {
 template <typename T>
 std::string TimeseriesHistogram<T>::getString(size_t level) const {
     std::string result;
-
     result += "totalCount: " + std::to_string(count(level)) + ", "
         + "totalSum: " + std::to_string(sum(level)) + ", "
         + "avg: " + std::to_string(avg(level)) + ", "
@@ -86,17 +85,6 @@ std::string TimeseriesHistogram<T>::getString(size_t level) const {
         + "99%: " + std::to_string(getPercentileEstimate(99,level)) + ", "
         + "90%: " + std::to_string(getPercentileEstimate(90,level)) + ", "
         + "80%: " + std::to_string(getPercentileEstimate(80,level)) + "\n";
-    for (size_t i = 0; i < mBuckets.getNumBuckets(); i++) {
-        if (i > 0) {
-            result.append("\n");
-        }
-        const ContainerType& cont = mBuckets.getByIndex(i);
-        result += "bucketMin: " + std::to_string(mBuckets.getBucketMin(i))
-            + " count: " + std::to_string(cont.count(level))
-            + " avg: " + std::to_string(cont.avg(level))
-            + " rate: " + std::to_string(cont.template rate(level));
-    }
-
     return result;
 }
 
