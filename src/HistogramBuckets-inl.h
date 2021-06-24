@@ -32,7 +32,9 @@ size_t HistogramBuckets<T>::getBucketIdx(ValueType value) const
     } else if (value >= mMax) {
         return mBuckets.size() - 1;
     } else {
-        // the 1 is the below_min bucket
+        // 第0个bucket是特殊bucket，范围内的bucket下标从1开始
+//        std::cout << "value: " << value << " mMin: " << mMin << " mBucketSize: "
+//                << mBucketSize << "\n";
         return size_t(((value - mMin) / mBucketSize) + 1);
     }
 }
@@ -66,7 +68,6 @@ size_t HistogramBuckets<T>::getPercentileBucketIdx(
     for (size_t n = 0; n < numBuckets; ++n) {
         uint64_t bucketCount =
             countFromBucket(const_cast<const BucketType&>(mBuckets[n]));
-        bucketCount = mBuckets[n].count(1);
         counts[n] = bucketCount;
         totalCount += bucketCount;
     }
@@ -126,9 +127,7 @@ T HistogramBuckets<T>::getPercentileEstimate(
         return ValueType();
     }
     if (lowPct == highPct) {
-        // Unlikely to have exact equality,
-        // but just return the bucket average in this case.
-        // We handle this here to avoid division by 0 below.
+        // 防止发生除0错误
         return avgFromBucket(mBuckets[bucketIdx]);
     }
 
@@ -154,6 +153,10 @@ T HistogramBuckets<T>::getPercentileEstimate(
         low = getBucketMin(bucketIdx);
         high = getBucketMax(bucketIdx);
     }
+//    std::cout << "pct: " << pct << "\n" << "bucketIdx: " << bucketIdx <<
+//            " lowPct: " << lowPct << " highPct: " << highPct
+//        << " low: " << low << " high: " << high << std::endl;
+
 
     // 由于无法得知bucket中所有数据的具体value，于是我们假设bucket中的数据是均匀分布的，
     // 中位数的value即为avg平均值。
