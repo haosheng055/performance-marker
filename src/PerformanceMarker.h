@@ -17,10 +17,11 @@
 #include <iomanip>
 
 #include "TimeseriesHistogram.h"
+#include "Defer.h"
 #include "cpptime.h"
 
-// TODO:addValue不是异步的
-// TODO:线程不安全
+// TODO:线程安全方面
+// TODO:不同数据类型
 class PerformanceMarker {
 public:
 
@@ -56,9 +57,20 @@ private:
 
 // 以下4个接口给name增加一个值n
 #define SOL2_PERFORMANCE_COUNT(name, n) PerformanceMarker::getInstance().addIntValue(name, n)
-#define SOL2_PERFORMANCE_COUNT_ONE(name) PERFORMANCE_COUNT(name, 1)
-#define SOL2_PERFORMANCE_COUNTF(name, n) PerformanceMarker::getInstance().addFloatValue(name, n)
-#define SOL2_PERFORMANCE_COUNT64(name, n) PerformanceMarker::getInstance().addInt64Value(name, n)
+#define SOL2_PERFORMANCE_COUNT_ONE(name) SOL2_PERFORMANCE_COUNT(name, 1)
+#define SOL2_PERFORMANCE_COUNTF(name, n) \
+    PerformanceMarker::getInstance().addFloatValue(name, n)
+#define SOL2_PERFORMANCE_COUNT64(name, n) \
+    PerformanceMarker::getInstance().addInt64Value(name, n)
 
+// 用于测量一段代码的执行时间，并给 name 增加这个时间值
+#define SOL2_PERFORMANCE_MEASURE_HELP(name, startTime)                                  \
+    auto startTime = std::chrono::steady_clock::now();                                  \
+    sol2::Defer timeVar##_Defer_ = [startTime]() -> void {                              \
+        auto endTime = std::chrono::steady_clock::now();                                \
+        auto duration = chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count();\
+        SOL2_PERFORMANCE_COUNT(name,duration);                                          \
+    };
+#define SOL2_PERFORMANCE_MEASURE(name) SOL2_PERFORMANCE_MEASURE_HELP(name, L_DEFER_COMBINE(_perf_measure_start_, __LINE__));
 
 #endif //PERFORMANCE_PERFORMANCEMARKER_H
