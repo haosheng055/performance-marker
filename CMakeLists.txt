@@ -9,6 +9,7 @@ set(SOURCES
         src/MultiLevelTimeSeries.h
         src/HistogramBuckets.h
         src/TimeseriesHistogram.h
-        src/PerformanceMarker.cpp)
+        src/PerformanceMarker.cpp
+        src/Defer.h)
 
 add_executable(performance main.cpp ${SOURCES})
