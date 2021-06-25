@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <mutex>
 
 #include "TimeseriesHistogram.h"
 #include "Defer.h"
@@ -47,6 +48,7 @@ private:
     PerformanceMarker() = default;
 
     static PerformanceMarker* mInstance;
+    static std::mutex mLock;
 
     static std::string mPrefix;
     static std::chrono::seconds mDuration;
