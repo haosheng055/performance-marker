@@ -12,6 +12,8 @@
 
 #include <chrono>
 #include <vector>
+#include <mutex>
+#include <memory>
 
 #include "BucketedTimeSeries.h"
 
@@ -204,6 +206,7 @@ public:
 
 private:
     std::vector<Level> mLevels;
+    std::shared_ptr<std::mutex> mMutex;
 
     // 缓存中存储同样时间的数据，当新时间的数据到来或者调用flush()时，缓存会被清空
     TimePoint mCachedTime;
