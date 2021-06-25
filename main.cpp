@@ -1,10 +1,10 @@
 #include <iostream>
 #include <thread>
 
-#include "src/BucketedTimeSeries.h"
-#include "src/MultiLevelTimeSeries.h"
-#include "src/TimeseriesHistogram.h"
-#include "src/PerformanceMarker.h"
+#include "include/BucketedTimeSeries.h"
+#include "include/MultiLevelTimeSeries.h"
+#include "include/PerformanceMarker.h"
+#include "include/TimeseriesHistogram.h"
 
 using namespace std;
 

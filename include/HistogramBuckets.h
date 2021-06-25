@@ -12,7 +12,6 @@
 
 #include "MultiLevelTimeSeries.h"
 
-
 /*
  * TimeSeriesHistogram的帮助类
  */

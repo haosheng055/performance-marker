@@ -17,8 +17,8 @@
 #include <iomanip>
 #include <mutex>
 
-#include "TimeseriesHistogram.h"
 #include "Defer.h"
+#include "TimeseriesHistogram.h"
 #include "cpptime.h"
 
 // TODO:线程安全方面

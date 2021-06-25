@@ -13,8 +13,8 @@
 #include <string>
 #include <iomanip>
 
-#include "MultiLevelTimeSeries.h"
 #include "HistogramBuckets.h"
+#include "MultiLevelTimeSeries.h"
 
 /*
  * TimeseriesHistogram 跟踪一段时间的数据分布。
@@ -342,6 +342,5 @@ private:
 };
 
 #include "TimeseriesHistogram-inl.h"
-
 
 #endif //PERFORMANCE_TIMESERIESHISTOGRAM_H
