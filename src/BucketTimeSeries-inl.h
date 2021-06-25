@@ -17,33 +17,8 @@ BucketedTimeSeries<VT>::BucketedTimeSeries(
     }
 
     mBuckets.resize(numBuckets, BucketType());
-}
 
-template <typename VT >
-bool BucketedTimeSeries<VT>::addValue(TimePoint now, const ValueType& value, uint64_t count)
-{
-    int bucketIndex;
-    if (isEmpty()) {
-        // 记录到的第一个数据
-        mFirstTime = now;
-        mLatestTime = now;
-        bucketIndex = getBucketIndex(now);
-    } else if (now == mLatestTime) {
-        // now还在当前时间内，无需额外操作
-        bucketIndex = getBucketIndex(now);
-    } else if (now > mLatestTime) {
-        // now是一个稍新的时间
-        bucketIndex = updateBuckets(now);
-    } else {
-        // now是一个稍早一些的过去的时间, 需要check 这个时间是否还在
-        // 我们的跟踪的时间范围内
-        if (now < getEarliestTime())
-            return false;
-        bucketIndex = getBucketIndex(now);
-    }
-    mTotal.addValue(value, count);
-    mBuckets[bucketIndex].addValue(value, count);
-    return true;
+    mMutex = std::make_shared<std::mutex>();
 }
 
 template <typename VT >
@@ -68,6 +43,7 @@ bool BucketedTimeSeries<VT >::addValueAggregated(TimePoint now, const ValueType&
             return false;
         bucketIndex = getBucketIndex(now);
     }
+    std::lock_guard<std::mutex> guard(*mMutex);
     mTotal.addValueAggregated(total, nsamples);
     mBuckets[bucketIndex].addValueAggregated(total, nsamples);
     return true;

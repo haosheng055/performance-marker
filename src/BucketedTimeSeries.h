@@ -12,6 +12,8 @@
 
 #include <chrono>
 #include <vector>
+#include <mutex>
+#include <memory>
 
 #include "Bucket.h"
 
@@ -33,7 +35,10 @@ public:
 
     bool addValue(TimePoint now, const ValueType& value) { return addValue(now, value, 1); }
 
-    bool addValue(TimePoint now, const ValueType& value, uint64_t count);
+    bool addValue(TimePoint now, const ValueType& value, uint64_t count)
+    {
+        return addValueAggregated(now,value * count, count);
+    }
 
     bool addValueAggregated(TimePoint now, const ValueType& total, uint64_t nsamples);
 
@@ -135,6 +140,7 @@ private:
     Duration mDuration;
     BucketType mTotal; //一个记录所有数据的bucket
     std::vector<BucketType> mBuckets;
+    std::shared_ptr<std::mutex> mMutex;
 };
 
 #include "BucketTimeSeries-inl.h"
