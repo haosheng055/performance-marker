@@ -23,7 +23,6 @@
  * 这个类可以很容易地用于同时跟踪数个预定时间段内的数据。例如，可以使用它来同时跟踪过去5分钟、
  * 15分钟、30分钟的数据的count、sum、avg。
  *
- * 该类不是线程安全的--请使用您自己的同步！
  */
 template <typename VT>
 class MultiLevelTimeSeries {

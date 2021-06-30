@@ -1,5 +1,5 @@
 //
-// Created by DELL on 2021/6/23.
+// Created by haosheng on 2021/6/23.
 //
 
 #ifndef PERFORMANCE_HISTOGRAMBUCKETS_INL_H
@@ -33,8 +33,6 @@ size_t HistogramBuckets<T>::getBucketIdx(ValueType value) const
         return mBuckets.size() - 1;
     } else {
         // 第0个bucket是特殊bucket，范围内的bucket下标从1开始
-//        std::cout << "value: " << value << " mMin: " << mMin << " mBucketSize: "
-//                << mBucketSize << "\n";
         return size_t(((value - mMin) / mBucketSize) + 1);
     }
 }
