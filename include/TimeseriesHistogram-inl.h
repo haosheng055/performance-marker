@@ -10,6 +10,8 @@
 #ifndef PERFORMANCE_TIMESERIESHISTOGRAM_INL_H
 #define PERFORMANCE_TIMESERIESHISTOGRAM_INL_H
 
+#include <sstream>
+
 template <typename T>
 TimeseriesHistogram<T>::TimeseriesHistogram(
     ValueType bucketSize,
