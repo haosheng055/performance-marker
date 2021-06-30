@@ -10,13 +10,13 @@
 #ifndef PERFORMANCE_PERFORMANCEMARKER_H
 #define PERFORMANCE_PERFORMANCEMARKER_H
 
-#include <string>
-#include <map>
-#include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
+#include <map>
 #include <mutex>
 #include <sstream>
+#include <string>
 
 #include "Defer.h"
 #include "TimeseriesHistogram.h"
@@ -24,7 +24,6 @@
 
 class PerformanceMarker {
 public:
-
     static PerformanceMarker& getInstance();
 
     /*
@@ -36,12 +35,17 @@ public:
 
     // 向内部增加一个采样点value
     void addValue(const std::string& name, double value);
-    void addFloatValue(const std::string& name, float value) { addValue(name,double(value)); }
-    void addIntValue(const std::string& name, int value) { addValue(name,double(value)); }
-    void addInt64Value(const std::string& name, int64_t value) { addValue(name,double(value)); }
+    void addFloatValue(const std::string& name, float value) { addValue(name, double(value)); }
+    void addIntValue(const std::string& name, int value) { addValue(name, double(value)); }
+    void addInt64Value(const std::string& name, int64_t value) { addValue(name, double(value)); }
+
+    // 获取最新的报告
+    std::string getLastReport();
 
 private:
     PerformanceMarker() = default;
+
+    void generateJsonFile();
 
     static PerformanceMarker* mInstance;
     static std::mutex mLock;
@@ -53,7 +57,7 @@ private:
     std::string mReport;
 };
 
-// 以下4个接口给name增加一个值n
+// 给name增加一个采样点
 #define SOL2_PERFORMANCE_COUNT(name, n) PerformanceMarker::getInstance().addIntValue(name, n)
 #define SOL2_PERFORMANCE_COUNT_ONE(name) SOL2_PERFORMANCE_COUNT(name, 1)
 #define SOL2_PERFORMANCE_COUNTF(name, n) \
@@ -61,13 +65,13 @@ private:
 #define SOL2_PERFORMANCE_COUNT64(name, n) \
     PerformanceMarker::getInstance().addInt64Value(name, n)
 
-// 用于测量一段代码的执行时间，并给 name 增加这个时间值
-#define SOL2_PERFORMANCE_MEASURE_HELP(name, startTime)                                  \
-    auto startTime = std::chrono::steady_clock::now();                                  \
-    sol2::Defer timeVar##_Defer_ = [&]() -> void {                              \
-        auto endTime = std::chrono::steady_clock::now();                                \
-        auto duration = chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count();\
-        SOL2_PERFORMANCE_COUNT(name,duration);                                          \
+// 用于测量一段代码的执行时间，并给 name 增加这个采样点
+#define SOL2_PERFORMANCE_MEASURE_HELP(name, startTime)                                                      \
+    auto startTime = std::chrono::steady_clock::now();                                                      \
+    sol2::Defer timeVar##_Defer_ = [&]() -> void {                                                          \
+        auto endTime = std::chrono::steady_clock::now();                                                    \
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(); \
+        SOL2_PERFORMANCE_COUNT(name, duration);                                                             \
     };
 #define SOL2_PERFORMANCE_MEASURE(name) SOL2_PERFORMANCE_MEASURE_HELP(name, L_DEFER_COMBINE(_perf_measure_start_, __LINE__));
 
