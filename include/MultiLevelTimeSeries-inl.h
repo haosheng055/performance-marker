@@ -10,7 +10,7 @@ MultiLevelTimeSeries<VT>::MultiLevelTimeSeries(
     size_t nBuckets, size_t nLevels, const Duration levelDurations[])
     : mCachedTime(), mCachedSum(0), mCachedCount(0)
 {
-//    mMutex = std::make_shared<std::mutex>();
+    mMutex = std::make_shared<std::mutex>();
     mLevels.reserve(nLevels);
     for (size_t i = 0; i < nLevels; ++i) {
         mLevels.emplace_back(nBuckets, levelDurations[i]);
@@ -22,7 +22,7 @@ MultiLevelTimeSeries<VT>::MultiLevelTimeSeries(
     size_t nBuckets, std::initializer_list<Duration> durations)
     : mCachedTime(), mCachedSum(0), mCachedCount(0)
 {
-//    mMutex = std::make_shared<std::mutex>();
+    mMutex = std::make_shared<std::mutex>();
     mLevels.reserve(durations.size());
     size_t i = 0;
     for (auto dur : durations) {
@@ -74,7 +74,6 @@ void MultiLevelTimeSeries<VT>::flush()
 {
     std::lock_guard<std::mutex> guard(*mMutex);
     if (mCachedCount > 0) {
-        std::unique_lock<std::mutex> guard(*mMutex);
         for (size_t i = 0; i < mLevels.size(); ++i) {
             mLevels[i].addValueAggregated(mCachedTime, mCachedSum, mCachedCount);
         }
