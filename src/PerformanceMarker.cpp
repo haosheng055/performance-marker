@@ -26,7 +26,6 @@ PerformanceMarker& PerformanceMarker::getInstance()
             mInstance->mTimer.add(
                 std::chrono::steady_clock::now() + mDuration,
                 [](CppTime::timer_id id) -> void {
-                    // 生成json格式数据
                     mInstance->mReport += "{\n";
                     int idx = 0;
                     for (auto& bucket : mInstance->mBuckets) {
@@ -64,4 +63,20 @@ void PerformanceMarker::addValue(const std::string& name, double value)
         mBuckets.insert(pair<string, TimeseriesHistogram<double>>(name, timeseriesHistogram));
     }
     (mBuckets.find(name)->second).addValue(chrono::steady_clock::now(), value);
+}
+
+std::string PerformanceMarker::getLastReport()
+{
+    string lastReport;
+    int idx = 0;
+    lastReport += "{\n";
+    for (auto& bucket : mInstance->mBuckets) {
+        // 清除bucket中过时数据
+        bucket.second.update(chrono::steady_clock::now());
+        lastReport.append("\t\"" + mPrefix + "_" + bucket.first + "\": {\n" + bucket.second.getString(0) + "\n\t}");
+        idx == mInstance->mBuckets.size() - 1 ? mInstance->mReport.append("\n") : mInstance->mReport.append(",\n");
+        idx++;
+    }
+    lastReport += "}";
+    return lastReport;
 }
