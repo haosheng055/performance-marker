@@ -16,13 +16,12 @@
 #include <fstream>
 #include <iomanip>
 #include <mutex>
+#include <sstream>
 
 #include "Defer.h"
 #include "TimeseriesHistogram.h"
 #include "cpptime.h"
 
-// TODO:线程安全方面
-// TODO:不同数据类型
 class PerformanceMarker {
 public:
 
@@ -40,9 +39,6 @@ public:
     void addFloatValue(const std::string& name, float value) { addValue(name,double(value)); }
     void addIntValue(const std::string& name, int value) { addValue(name,double(value)); }
     void addInt64Value(const std::string& name, int64_t value) { addValue(name,double(value)); }
-
-    // 获取最新的报告
-    static const std::string& getLastReport();
 
 private:
     PerformanceMarker() = default;
@@ -68,7 +64,7 @@ private:
 // 用于测量一段代码的执行时间，并给 name 增加这个时间值
 #define SOL2_PERFORMANCE_MEASURE_HELP(name, startTime)                                  \
     auto startTime = std::chrono::steady_clock::now();                                  \
-    sol2::Defer timeVar##_Defer_ = [startTime]() -> void {                              \
+    sol2::Defer timeVar##_Defer_ = [&]() -> void {                              \
         auto endTime = std::chrono::steady_clock::now();                                \
         auto duration = chrono::duration_cast<chrono::milliseconds>(endTime-startTime).count();\
         SOL2_PERFORMANCE_COUNT(name,duration);                                          \
