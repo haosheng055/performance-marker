@@ -24,8 +24,8 @@ PerformanceMarker& PerformanceMarker::getInstance()
         if(mInstance == nullptr) {
             mInstance = new PerformanceMarker();
             mInstance->mTimer.add(
-                std::chrono::steady_clock::now(),
-                [&](CppTime::timer_id id) -> void {
+                std::chrono::steady_clock::now() + mDuration,
+                [](CppTime::timer_id id) -> void {
                     // 生成json格式数据
                     mInstance->mReport += "{\n";
                     int idx = 0;
@@ -41,7 +41,7 @@ PerformanceMarker& PerformanceMarker::getInstance()
                     // 打开对应日期时间的文件，并写入数据
                     auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
                     std::stringstream ss;
-                    ss << std::put_time(std::localtime(&currentTime), "%Y.%m.%d %H.%M.json");
+                    ss << std::put_time(std::localtime(&currentTime), "%Y.%m.%d %H.%M.%S.json");
                     ofstream outfile;
                     outfile.open(R"(.\)" + ss.str());
                     if (outfile) {
@@ -64,9 +64,4 @@ void PerformanceMarker::addValue(const std::string& name, double value)
         mBuckets.insert(pair<string, TimeseriesHistogram<double>>(name, timeseriesHistogram));
     }
     (mBuckets.find(name)->second).addValue(chrono::steady_clock::now(), value);
-}
-
-const std::string& PerformanceMarker::getLastReport()
-{
-    return getInstance().mReport;
 }
