@@ -13,3 +13,5 @@ set(SOURCES
         include/Defer.h)
 
 add_executable(performance main.cpp ${SOURCES})
+
+add_subdirectory(tests)
