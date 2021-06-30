@@ -38,7 +38,7 @@ public:
     void clearBucket()
     {
         mCount = 0;
-        mSum = ValueType();
+        mSum = ValueType(0);
     }
 
     Bucket& operator+=(const Bucket& bucket)
