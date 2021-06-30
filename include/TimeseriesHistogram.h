@@ -12,6 +12,7 @@
 
 #include <string>
 #include <iomanip>
+#include <sstream>
 
 #include "HistogramBuckets.h"
 #include "MultiLevelTimeSeries.h"
