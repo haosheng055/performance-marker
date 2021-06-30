@@ -50,7 +50,7 @@ bool BucketedTimeSeries<VT >::addValueAggregated(TimePoint now, const ValueType&
 }
 
 template <typename VT >
-bool BucketedTimeSeries<VT >::isEmpty() const
+bool BucketedTimeSeries<VT>::isEmpty() const
 {
     // 在构造函数中已经把mFirstTime设置为较大值，如果有数据
     // 插入，那么mFirstTime不会是较大值
@@ -58,20 +58,22 @@ bool BucketedTimeSeries<VT >::isEmpty() const
 }
 
 template <typename VT >
-size_t BucketedTimeSeries<VT >::update(TimePoint now)
+size_t BucketedTimeSeries<VT>::update(TimePoint now)
 {
     if (isEmpty()) {
         mFirstTime = now;
     }
+    if(now > mLatestTime) {
+        return updateBuckets(now);
+    }
     // 如果传入的时间没有当前有记录的时间新，那么不用管它
-    if (now <= mLatestTime) {
+    else {
         return getBucketIndex(mLatestTime);
     }
-    return updateBuckets(now);
 }
 
 template <typename VT >
-void BucketedTimeSeries<VT >::clear()
+void BucketedTimeSeries<VT>::clear()
 {
     for (BucketType& bucket : mBuckets) {
         bucket.clear();
@@ -105,7 +107,9 @@ size_t BucketedTimeSeries<VT >::getBucketIndex(TimePoint now) const
 template <typename VT >
 size_t BucketedTimeSeries<VT >::updateBuckets(TimePoint now)
 {
-    size_t currentBucketIdx = getBucketIndex(now);
+    std::lock_guard<std::mutex> guard(*mMutex);
+
+    size_t currentBucketIdx;
     TimePoint currentBucketStart;
     TimePoint nextBucketStart;
     // 先计算出自从上次插入的数据落入的bucket的信息
@@ -117,24 +121,25 @@ size_t BucketedTimeSeries<VT >::updateBuckets(TimePoint now)
     // （3）时间过去了duration_之内，buckets中的部分数据过时，对这部分数据进行clear()
     if (now < nextBucketStart) {
         return currentBucketIdx;
-    } else if (now > nextBucketStart + mDuration) {
+    } else if (now >= currentBucketStart + mDuration) {
+
         for (BucketType& bucket : mBuckets) {
             bucket.clearBucket();
         }
         mTotal.clearBucket();
         return getBucketIndex(now);
     } else {
-        size_t newBucketIdx = getBucketIndex(now);
-        size_t i = currentBucketIdx + 1;
-        while (i != newBucketIdx) {
-            if (i >= mBuckets.size()) {
-                i = 0;
+        size_t newBucket = getBucketIndex(now);
+        size_t idx = currentBucketIdx;
+        while (idx != newBucket) {
+            ++idx;
+            if (idx >= mBuckets.size()) {
+                idx = 0;
             }
-            mTotal -= mBuckets[i];
-            mBuckets[i].clearBucket();
-            i++;
+            mTotal -= mBuckets[idx];
+            mBuckets[idx].clearBucket();
         }
-        return newBucketIdx;
+        return newBucket;
     }
 }
 
@@ -164,7 +169,7 @@ void BucketedTimeSeries<VT >::getBucketInfo(
     *bucketIdx = size_t(scaledTime / mDuration.count());
 
     TimeInt scaledBucketStart = scaledTime - scaledTime % mDuration.count();
-    TimeInt scaledNextBucketStart = scaledTime + mDuration.count();
+    TimeInt scaledNextBucketStart = scaledBucketStart + mDuration.count();
     TimeInt numFullDurations = timePoint.time_since_epoch() / mDuration;
     *bucketStart = Duration((scaledBucketStart + mBuckets.size() - 1) / mBuckets.size())
                    + TimePoint(numFullDurations * mDuration);
