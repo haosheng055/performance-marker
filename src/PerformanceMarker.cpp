@@ -21,7 +21,7 @@ PerformanceMarker& PerformanceMarker::getInstance()
 {
     if (mInstance == nullptr) {
         std::lock_guard<std::mutex> guard(mLock);
-        if(mInstance == nullptr) {
+        if (mInstance == nullptr) {
             mInstance = new PerformanceMarker();
             mInstance->mTimer.add(
                 std::chrono::steady_clock::now() + mDuration,

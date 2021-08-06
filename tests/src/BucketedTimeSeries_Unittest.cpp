@@ -2,6 +2,7 @@
 // Created by Hao sheng on 2021/6/30.
 //
 #include "../../include/BucketedTimeSeries.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <thread>
@@ -16,7 +17,7 @@ protected:
         bucketedTimeSeries1.addValue(beginTime + std::chrono::seconds(11), 2);
         bucketedTimeSeries1.addValue(beginTime + std::chrono::seconds(12), 3);
     }
-    BucketedTimeSeries<double> bucketedTimeSeries1{10,std::chrono::seconds(10)};
+    BucketedTimeSeries<double> bucketedTimeSeries1 { 10, std::chrono::seconds(10) };
 };
 
 TEST_F(BucketedTimeSeriesTest, addValue)
@@ -24,8 +25,6 @@ TEST_F(BucketedTimeSeriesTest, addValue)
     EXPECT_EQ(bucketedTimeSeries1.count(), 3);
     EXPECT_EQ(bucketedTimeSeries1.sum(), 6);
     EXPECT_EQ(bucketedTimeSeries1.avg(), 2);
-    EXPECT_EQ(bucketedTimeSeries1.rate(),0.6);
+    EXPECT_EQ(bucketedTimeSeries1.rate(), 0.6);
     EXPECT_EQ(bucketedTimeSeries1.countRate(), 0.3);
 }
-
-

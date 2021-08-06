@@ -2,7 +2,8 @@
 // Created by Hao sheng on 2021/6/30.
 //
 #include "../../include/MultiLevelTimeSeries.h"
-#include "gtest/gtest.h"
+#include "gmock/gmock.h"
+#include <gtest/gtest.h>
 
 #include <thread>
 
@@ -36,4 +37,3 @@ TEST_F(MultiLevelTimeSeriesTest, addValueIn1Min)
     EXPECT_EQ(multiLevelTimeSeries1.sum(1), 1006);
     EXPECT_EQ(multiLevelTimeSeries1.avg(1), 251.5);
 }
-
