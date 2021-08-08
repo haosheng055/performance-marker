@@ -1,8 +1,8 @@
 //
-// Created by Hao sheng on 2021/6/30.
+// Created by haosheng on 2021/6/30.
 //
-#include "../../include/MultiLevelTimeSeries.h"
-#include "gmock/gmock.h"
+#include "MultiLevelTimeSeries.h"
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <thread>
