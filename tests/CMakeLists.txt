@@ -21,5 +21,5 @@ target_include_directories(PerformanceMarker_unittests
         )
 set_target_properties(PerformanceMarker_unittests
         PROPERTIES
-        CXX_STANDARD 11
+        CXX_STANDARD 17
         )

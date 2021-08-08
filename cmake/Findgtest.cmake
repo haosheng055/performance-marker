@@ -13,6 +13,7 @@ find_path(GTEST_INCLUDE_DIRS
         HINTS
         ${DB_INCLUDE_FIND_PATHS}
         )
+message(STATUS "Found GTEST_INCLUDE_DIRS: ${GTEST_INCLUDE_DIRS}")
 
 find_library(GTEST_LIBRARY
         NAMES
