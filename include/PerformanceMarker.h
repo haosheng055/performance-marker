@@ -45,8 +45,6 @@ public:
 private:
     PerformanceMarker() = default;
 
-    void generateJsonFile();
-
     static PerformanceMarker* mInstance;
     static std::mutex mLock;
 

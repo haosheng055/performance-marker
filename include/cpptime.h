@@ -119,9 +119,9 @@ namespace detail
 // The event structure that holds the information about a timer.
 struct Event {
     timer_id id;
-    timestamp start;
-    duration period;
-    handler_t handler;
+    timestamp start;        // start timepoint
+    duration period;        // time interval
+    handler_t handler;      // handler function
     bool valid;
     Event()
         : id(0), start(duration::zero()), period(duration::zero()), handler(nullptr), valid(false)
@@ -159,18 +159,18 @@ class Timer
     // Thread and locking variables.
     std::mutex m;
     std::condition_variable cond;
-    std::thread worker;
+    std::thread worker;                             // 1.
 
     // Use to terminate the timer thread.
-    bool done = false;
+    bool done = false;                              // 0.
 
     // The vector that holds all active events.
-    std::vector<detail::Event> events;
+    std::vector<detail::Event> events;              // 2.
     // Sorted queue that has the next timeout at its top.
-    std::multiset<detail::Time_event> time_events;
+    std::multiset<detail::Time_event> time_events;  // 3.
 
     // A list of ids to be re-used. If possible, ids are used from this pool.
-    std::stack<CppTime::timer_id> free_ids;
+    std::stack<CppTime::timer_id> free_ids;         // 4.
 
 public:
     Timer() : m{}, cond{}, worker{}, events{}, time_events{}, free_ids{}
@@ -182,11 +182,14 @@ public:
 
     ~Timer()
     {
+        // terminate the looping thread.
         scoped_m lock(m);
         done = true;
         lock.unlock();
         cond.notify_all();
         worker.join();
+
+        // free resources
         events.clear();
         time_events.clear();
         while(!free_ids.empty()) {
@@ -283,7 +286,8 @@ private:
                     // Remove time event
                     time_events.erase(time_events.begin());
 
-                    // Invoke the handler
+                    // Invoke the handler, note that handler may invoke add/remove function,
+                    // so need to call unlock before to prevent double lock.
                     lock.unlock();
                     events[te.ref].handler(te.ref);
                     lock.lock();

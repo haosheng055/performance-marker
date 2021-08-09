@@ -1,7 +1,7 @@
 //
 // Created by DELL on 2021/6/23.
 //
-#include "../include/PerformanceMarker.h"
+#include "PerformanceMarker.h"
 
 using namespace std;
 
@@ -40,7 +40,7 @@ PerformanceMarker& PerformanceMarker::getInstance()
                     // 打开对应日期时间的文件，并写入数据
                     auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
                     std::stringstream ss;
-                    ss << std::put_time(std::localtime(&currentTime), "%Y.%m.%d %H.%M.%S.json");
+                    ss << std::put_time(std::localtime(&currentTime), "%Y.%m.%d-%H.%M.%S.json");
                     ofstream outfile;
                     outfile.open(R"(.\)" + ss.str());
                     if (outfile) {
