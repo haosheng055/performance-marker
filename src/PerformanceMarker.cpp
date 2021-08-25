@@ -42,7 +42,7 @@ PerformanceMarker& PerformanceMarker::getInstance()
                     std::stringstream ss;
                     ss << std::put_time(std::localtime(&currentTime), "%Y.%m.%d-%H.%M.%S.json");
                     ofstream outfile;
-                    outfile.open(R"(.\)" + ss.str());
+                    outfile.open( ss.str());
                     if (outfile) {
                         outfile << mInstance->mReport;
                         outfile.close();

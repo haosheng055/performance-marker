@@ -1,0 +1,16 @@
+//
+// Created by DELL on 2021/8/25.
+//
+
+#ifndef PERFORMANCEMARKER_ASYNCLOGGING_H
+#define PERFORMANCEMARKER_ASYNCLOGGING_H
+
+
+
+class AsyncLogging {
+
+};
+
+
+
+#endif //PERFORMANCEMARKER_ASYNCLOGGING_H

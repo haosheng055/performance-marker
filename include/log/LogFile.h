@@ -1,0 +1,16 @@
+//
+// Created by DELL on 2021/8/24.
+//
+
+#ifndef PERFORMANCEMARKER_LOGFILE_H
+#define PERFORMANCEMARKER_LOGFILE_H
+
+
+
+class LogFile {
+
+};
+
+
+
+#endif //PERFORMANCEMARKER_LOGFILE_H
