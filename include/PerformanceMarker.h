@@ -21,6 +21,8 @@
 #include "Defer.h"
 #include "TimeseriesHistogram.h"
 #include "cpptime.h"
+#include "log/Logger.h"
+#include "log/LogFile.h"
 
 class PerformanceMarker {
 public:

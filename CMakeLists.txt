@@ -14,7 +14,7 @@ option(PERFORMANCE_BUILD_SHARED "Build Shared Library For PerformanceMarker" OFF
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 
-file(GLOB PERFORMANCE_MARKER_SRC_FILES src/*)
+file(GLOB PERFORMANCE_MARKER_SRC_FILES src/* src/log/*)
 if (PERFORMANCE_BUILD_SHARED)
     add_library(PerformanceMarkerApi SHARED ${PERFORMANCE_MARKER_SRC_FILES})
 ELSE ()
